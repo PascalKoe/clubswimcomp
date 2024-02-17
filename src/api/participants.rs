@@ -109,7 +109,7 @@ async fn add_participant(
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 struct RemoveParticipantParameters {
-    cascade: Option<bool>,
+    force: Option<bool>,
 }
 
 async fn remove_participant(
@@ -119,7 +119,7 @@ async fn remove_participant(
 ) -> ApiResponse<()> {
     let participant_service = state.participant_service();
     match participant_service
-        .remove_participant(participant_id, params.cascade.unwrap_or_default())
+        .remove_participant(participant_id, params.force.unwrap_or_default())
         .await
     {
         Ok(Some(true)) => Ok((StatusCode::OK, ())),
