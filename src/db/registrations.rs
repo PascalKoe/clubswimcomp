@@ -57,4 +57,59 @@ impl Repository {
         .await
         .context("Failed to fetch registration result rom database")
     }
+
+    /// Delete a registration.
+    ///
+    /// Beware that in order for not violating the database schema, there must
+    /// no be any results for the registration.
+    ///
+    /// # Parameters:
+    /// - `registration_id` - The id of the registration for which shall be
+    ///   deleted.
+    ///
+    /// # Results:
+    /// - `Ok(true)` - if the result has been deleted
+    /// - `Ok(false)` - if the result did not exist
+    /// - `Err(e)` - in case of an database error
+    pub async fn delete_registration(&self, registration_id: Uuid) -> Result<bool> {
+        let rows = sqlx::query!(
+            r#"
+                DELETE FROM registrations
+                WHERE id = $1
+            "#,
+            registration_id
+        )
+        .execute(&self.pool)
+        .await
+        .context("Failed to delete registration in database")?
+        .rows_affected();
+
+        Ok(rows > 0)
+    }
+
+    /// Delete a result of a registration.
+    ///
+    /// # Parameters:
+    /// - `registration_id` - The id of the registration for which the result
+    ///   shall be deleted.
+    ///
+    /// # Results:
+    /// - `Ok(true)` - if the result has been deleted
+    /// - `Ok(false)` - if the result did not exist
+    /// - `Err(e)` - in case of an database error
+    pub async fn delete_result_for_registration(&self, registration_id: Uuid) -> Result<bool> {
+        let rows = sqlx::query!(
+            r#"
+                DELETE FROM registration_results
+                WHERE registration_id = $1
+            "#,
+            registration_id
+        )
+        .execute(&self.pool)
+        .await
+        .context("Failed to delete registration result in database")?
+        .rows_affected();
+
+        Ok(rows > 0)
+    }
 }

@@ -88,4 +88,26 @@ impl Repository {
         .await
         .context("Failed to create participant in database")
     }
+
+    /// Delete a participant from the database.
+    ///
+    /// # Returns
+    /// - `Ok(true)` - if the participant has been deleted
+    /// - `Ok(false)` - if the participant did not exist
+    /// - `Err(e)` - in case of an database error
+    pub async fn delete_participant(&self, participant_id: Uuid) -> Result<bool> {
+        let rows = sqlx::query!(
+            r#"
+                DELETE FROM participants
+                WHERE id = $1
+            "#,
+            participant_id
+        )
+        .execute(&self.pool)
+        .await
+        .context("Failed to delete participant from database")?
+        .rows_affected();
+
+        Ok(rows > 0)
+    }
 }

@@ -1,6 +1,6 @@
 use anyhow::Context;
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::StatusCode,
     routing::*,
     Json, Router,
@@ -18,9 +18,12 @@ pub fn router() -> Router<AppState> {
         .route("/", get(list_participants))
         .route("/", post(add_participant))
         .route("/:participant_id", get(participant_details))
+        .route("/:participant_id", delete(remove_participant))
 }
 
-async fn list_participants(State(state): State<AppState>) -> ApiResponse<Vec<model::Participant>> {
+async fn list_participants(
+    State(state): State<AppState>,
+) -> ApiResponse<Json<Vec<model::Participant>>> {
     let participant_service = state.participant_service();
     match participant_service
         .list_participants()
@@ -35,11 +38,10 @@ async fn list_participants(State(state): State<AppState>) -> ApiResponse<Vec<mod
     }
 }
 
-#[axum::debug_handler]
 async fn participant_details(
     Path(participant_id): Path<Uuid>,
     State(state): State<AppState>,
-) -> ApiResponse<model::ParticipantDetails> {
+) -> ApiResponse<Json<model::ParticipantDetails>> {
     let participant_service = state.participant_service();
     match participant_service
         .participant_details(participant_id)
@@ -66,7 +68,7 @@ struct AddParticipantBody {
 async fn add_participant(
     State(state): State<AppState>,
     Json(p): Json<AddParticipantBody>,
-) -> ApiResponse<model::Participant> {
+) -> ApiResponse<Json<model::Participant>> {
     let participant_service = state.participant_service();
     match participant_service
         .add_participant(&p.first_name, &p.last_name, p.gender, p.birthday)
@@ -74,6 +76,34 @@ async fn add_participant(
         .context("Failed to handle add participant request")
     {
         Ok(p) => Ok((StatusCode::CREATED, Json(p))),
+        Err(e) => {
+            tracing::error!("{e:#?}");
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+struct RemoveParticipantParameters {
+    cascade: Option<bool>,
+}
+
+async fn remove_participant(
+    Path(participant_id): Path<Uuid>,
+    Query(params): Query<RemoveParticipantParameters>,
+    State(state): State<AppState>,
+) -> ApiResponse<&'static str> {
+    let participant_service = state.participant_service();
+    match participant_service
+        .remove_participant(participant_id, params.cascade.unwrap_or_default())
+        .await
+    {
+        Ok(Some(true)) => Ok((StatusCode::OK, "")),
+        Ok(Some(false)) => Ok((
+            StatusCode::BAD_REQUEST,
+            "Participant can't be deleted as there are still registrations.",
+        )),
+        Ok(None) => Ok((StatusCode::NOT_FOUND, "Participant does not exist")),
         Err(e) => {
             tracing::error!("{e:#?}");
             Err(StatusCode::INTERNAL_SERVER_ERROR)

@@ -1,8 +1,12 @@
 use anyhow::{Context, Result};
 use chrono::{NaiveDate, Utc};
+use tracing::instrument;
 use uuid::Uuid;
 
-use crate::{db, model};
+use crate::{
+    db,
+    model::{self, ParticipantRegistration},
+};
 
 pub struct ParticipantService {
     participant_repo: db::participants::Repository,
@@ -23,6 +27,7 @@ impl ParticipantService {
         }
     }
 
+    #[instrument(skip(self))]
     pub async fn list_participants(&self) -> Result<Vec<model::Participant>> {
         let participants = self
             .participant_repo
@@ -36,6 +41,7 @@ impl ParticipantService {
         Ok(participants)
     }
 
+    #[instrument(skip(self))]
     pub async fn add_participant(
         &self,
         first_name: &str,
@@ -60,6 +66,7 @@ impl ParticipantService {
         Ok(participant)
     }
 
+    #[instrument(skip(self))]
     pub async fn participant_details(
         &self,
         participant_id: Uuid,
@@ -100,6 +107,7 @@ impl ParticipantService {
         }))
     }
 
+    #[instrument(skip(self))]
     async fn load_registration(
         &self,
         registration_id: Uuid,
@@ -129,6 +137,7 @@ impl ParticipantService {
         }))
     }
 
+    #[instrument(skip(self))]
     async fn load_competition(&self, competition_id: Uuid) -> Result<Option<model::Competition>> {
         let competition = self
             .competition_repo
@@ -140,6 +149,7 @@ impl ParticipantService {
         Ok(competition)
     }
 
+    #[instrument(skip(self))]
     async fn load_registration_results(
         &self,
         registration_id: Uuid,
@@ -152,6 +162,91 @@ impl ParticipantService {
             .map(model::RegistrationResult::from);
 
         Ok(registration_result)
+    }
+
+    /// Remove a participant from the store.
+    ///
+    /// Before a participant can be deleted, all registrations of the
+    /// participant must be removed. As an alternative they can be removed
+    /// automatically by setting `cascading` to `true`.
+    ///
+    /// # Parameters
+    /// - `participant_id` - The id of the participant that shall be removed.
+    /// - `cascading` - If set to `true`, all registrations for the participant are
+    ///                 also removed
+    ///
+    /// # Returns
+    /// - `Ok(Some(true))` - If the participant has been removed
+    /// - `Ok(Some(false))` - If the participant could not be remove because
+    ///   `cascading` is `false` and there still are registrations.
+    /// - `Ok(None)` - If the participant does not exist
+    /// - `Err(e)` - in case of an error
+    #[instrument(skip(self))]
+    pub async fn remove_participant(
+        &self,
+        participant_id: Uuid,
+        cascading: bool,
+    ) -> Result<Option<bool>> {
+        // FIXME: Do the deletion in an atomic way i.e. using a transaction
+
+        let Some(participant_details) = self.participant_details(participant_id).await? else {
+            tracing::debug!(
+                "The participant can't be deleted, as the participant could not be found"
+            );
+            return Ok(None);
+        };
+
+        // There are registrations, either cascade or return 'error'
+        if !participant_details.registrations.is_empty() {
+            if !cascading {
+                tracing::debug!(
+                    "Could not remove participant as there are still registrations attached and cascading deletion was not selected"
+                );
+                return Ok(Some(false));
+            }
+
+            tracing::debug!("Deleting registrations for participant in a cascading way");
+            for registration in participant_details.registrations {
+                self.remove_registration(registration).await?;
+            }
+            tracing::debug!("All registrations have been deleted");
+        }
+
+        let existed = self
+            .participant_repo
+            .delete_participant(participant_id)
+            .await
+            .context("Failed to delete participant from repository")?;
+
+        if !existed {
+            tracing::warn!("The participant should still exist as we queried the participant before, but didn't");
+        }
+
+        Ok(Some(true))
+    }
+
+    #[instrument(skip(self))]
+    async fn remove_registration(&self, registration: ParticipantRegistration) -> Result<()> {
+        if registration.result.is_some() {
+            let existed = self
+                .registration_repo
+                .delete_result_for_registration(registration.id)
+                .await
+                .context("Failed to delete registration result while removing registration")?;
+
+            if !existed {
+                tracing::warn!(
+                    "Tried to delete registration result that should exist, but it didn't"
+                );
+            }
+        }
+
+        let existed = self.registration_repo.delete_registration(registration.id).await.context("Failed to delete registration even though we just removed the results (if existed)")?;
+        if !existed {
+            tracing::warn!("Tried to delete registration that should exist, but it didn't");
+        }
+
+        Ok(())
     }
 }
 
