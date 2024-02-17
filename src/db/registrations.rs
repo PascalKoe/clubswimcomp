@@ -112,4 +112,76 @@ impl Repository {
 
         Ok(rows > 0)
     }
+
+    /// Create a new registration.
+    ///
+    /// The given participant and the competition must both exist, otherwise
+    /// there will be an database error due to unfulfilled constraints.
+    ///
+    /// # Parameters:
+    /// - `participant_id` - The id of the participant that registers
+    /// - `competition_id` - The id of the competition to register for
+    ///
+    /// # Returns:
+    /// - `Ok(registration_id)` - If a new registration has been created or
+    ///    already exists.
+    /// - `Err(e)` - In case of a database error
+    pub async fn create_registration(
+        &self,
+        participant_id: Uuid,
+        competition_id: Uuid,
+    ) -> Result<Uuid> {
+        let existing_registration_id = sqlx::query_scalar!(
+            r#"
+                SELECT
+                    id AS "id!"
+                FROM registrations
+                WHERE
+                    participant_id = $1 AND
+                    competition_id = $2;
+            "#,
+            participant_id,
+            competition_id
+        )
+        .fetch_optional(&self.pool)
+        .await
+        .context("Failed to look for existing registration in database")?;
+
+        if let Some(registration_id) = existing_registration_id {
+            return Ok(registration_id);
+        }
+
+        let registration_id = sqlx::query_scalar!(
+            r#"
+                INSERT INTO registrations (
+                    participant_id, competition_id
+                ) VALUES (
+                    $1, $2
+                ) RETURNING id;
+            "#,
+            participant_id,
+            competition_id
+        )
+        .fetch_one(&self.pool)
+        .await
+        .context("Failed to insert registration in database")?;
+
+        Ok(registration_id)
+    }
+
+    pub async fn registration_by_id(&self, registration_id: Uuid) -> Result<Option<Registration>> {
+        sqlx::query_as!(
+            Registration,
+            r#"
+                SELECT
+                    id, participant_id, competition_id
+                FROM registrations
+                WHERE id = $1;
+            "#,
+            registration_id
+        )
+        .fetch_optional(&self.pool)
+        .await
+        .context("Failed to fetch registrations by id from database")
+    }
 }

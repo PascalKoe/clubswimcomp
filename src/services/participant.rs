@@ -284,6 +284,61 @@ impl ParticipantService {
 
         Ok(Some(available_competitions))
     }
+
+    /// Register participant for a competition.
+    ///
+    /// # Parameters:
+    /// - `participant_id` - The id of the participant
+    /// - `competition_id` - The id of the competition
+    ///
+    /// # Returns:
+    /// - `Ok(Some(...))` - if the registration is successful
+    /// - `Ok(None)` - if either the competition or the participant does not exist
+    /// - `Err(e)` - when an error occurred
+    #[instrument(skip(self))]
+    pub async fn register_for_competition(
+        &self,
+        participant_id: Uuid,
+        competition_id: Uuid,
+    ) -> Result<Option<model::ParticipantRegistration>> {
+        let Some(_) = self
+            .competition_repo
+            .competition_by_id(competition_id)
+            .await?
+        else {
+            tracing::debug!("The competition does not exist");
+            return Ok(None);
+        };
+
+        let Some(_) = self
+            .participant_repo
+            .participant_by_id(participant_id)
+            .await?
+        else {
+            tracing::debug!("The participant does not exist");
+            return Ok(None);
+        };
+
+        let registration_id = self
+            .registration_repo
+            .create_registration(participant_id, competition_id)
+            .await.context("Failed to create registration even though we checked that participant and competition exist")?;
+
+        let registration = self
+            .load_registration(registration_id, competition_id)
+            .await?
+            .context("Could not load registration even though it was just created")?;
+
+        if registration_id != registration.id {
+            tracing::error!(
+                inserted_id = ?registration_id,
+                fetched_id = ?registration.id,
+                "Inserted and fetch registration ids do not match, ignoring it"
+            );
+        }
+
+        Ok(Some(registration))
+    }
 }
 
 impl From<db::participants::Participant> for model::Participant {

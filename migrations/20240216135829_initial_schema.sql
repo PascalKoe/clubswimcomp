@@ -27,14 +27,14 @@ CREATE TABLE participants (
 );
 
 CREATE TABLE competitions (
-	id			UUID			PRIMARY KEY NOT NULL		DEFAULT gen_random_uuid(),,
+	id			UUID			PRIMARY KEY NOT NULL		DEFAULT gen_random_uuid(),
 	gender		gender			NOT NULL,
 	stroke		stroke			NOT NULL,
 	distance	INT				NOT NULL 					CHECK((distance % 25) = 0 AND distance > 0)
 );
 
 CREATE TABLE registrations (
-	id					UUID			PRIMARY KEY NOT NULL,
+	id					UUID			PRIMARY KEY NOT NULL		DEFAULT gen_random_uuid(),
 	participant_id		UUID			NOT NULL					REFERENCES participants(id),
 	competition_id		UUID			NOT NULL					REFERENCES competitions(id),
 	CONSTRAINT one_registration_per_participant UNIQUE(participant_id, competition_id)

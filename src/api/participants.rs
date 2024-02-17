@@ -23,6 +23,10 @@ pub fn router() -> Router<AppState> {
             "/:participant_id/registrations/available-competitions",
             get(available_competitions),
         )
+        .route(
+            "/:participant_id/registrations",
+            post(register_for_competition),
+        )
 }
 
 async fn list_participants(
@@ -154,5 +158,32 @@ async fn available_competitions(
                 "Internal Server Error".to_string(),
             ))
         }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+struct RegisterForCompetitionBody {
+    competition_id: Uuid,
+}
+
+async fn register_for_competition(
+    Path(participant_id): Path<Uuid>,
+    State(state): State<AppState>,
+    Json(body): Json<RegisterForCompetitionBody>,
+) -> ApiResponse<Json<model::ParticipantRegistration>> {
+    let participant_service = state.participant_service();
+    match participant_service
+        .register_for_competition(participant_id, body.competition_id)
+        .await
+    {
+        Ok(Some(r)) => Ok((StatusCode::CREATED, Json(r))),
+        Ok(None) => Err((
+            StatusCode::BAD_REQUEST,
+            "Participant or competition does not exist".to_string(),
+        )),
+        Err(_) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Internal Server Error".to_string(),
+        )),
     }
 }
