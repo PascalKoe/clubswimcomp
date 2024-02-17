@@ -272,6 +272,7 @@ impl ParticipantService {
             .all_competitions()
             .await?
             .into_iter()
+            .filter(|c| c.gender == participant.participant.gender.into())
             .filter(|c| {
                 !participant
                     .registrations
