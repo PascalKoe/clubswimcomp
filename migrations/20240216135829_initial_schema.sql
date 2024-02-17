@@ -27,7 +27,7 @@ CREATE TABLE participants (
 );
 
 CREATE TABLE competitions (
-	id			UUID			PRIMARY KEY NOT NULL,
+	id			UUID			PRIMARY KEY NOT NULL		DEFAULT gen_random_uuid(),,
 	gender		gender			NOT NULL,
 	stroke		stroke			NOT NULL,
 	distance	INT				NOT NULL 					CHECK((distance % 25) = 0 AND distance > 0)

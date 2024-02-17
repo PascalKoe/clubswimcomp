@@ -18,6 +18,20 @@ impl Repository {
         Self { pool }
     }
 
+    pub async fn all_competitions(&self) -> Result<Vec<Competition>> {
+        sqlx::query_as!(
+            Competition,
+            r#"
+                SELECT
+                    id, gender AS "gender: _", stroke AS "stroke: _", distance
+                FROM competitions;
+            "#
+        )
+        .fetch_all(&self.pool)
+        .await
+        .context("Failed to fetch list of all competitions from database")
+    }
+
     pub async fn competition_by_id(&self, competition_id: Uuid) -> Result<Option<Competition>> {
         sqlx::query_as!(
             Competition,
@@ -31,6 +45,6 @@ impl Repository {
         )
         .fetch_optional(&self.pool)
         .await
-        .context("Failed to fetch list of all registrations for participant from database")
+        .context("Failed to fetch competition by id from database")
     }
 }

@@ -6,7 +6,7 @@ use crate::services::ParticipantService;
 
 mod participants;
 
-type ApiResponse<T> = Result<(StatusCode, T), StatusCode>;
+type ApiResponse<T> = Result<(StatusCode, T), (StatusCode, String)>;
 
 #[derive(Clone)]
 pub struct AppState {

@@ -248,6 +248,41 @@ impl ParticipantService {
 
         Ok(())
     }
+
+    /// Get a list of competitions for which registrations are still available.
+    ///
+    /// # Parameters:
+    /// - `participant_id` - The id of the participant
+    ///
+    /// # Returns:
+    /// - `Ok(Some(...))` - when the participant does exists
+    /// - `Ok(None)` - when the participant does not exist
+    /// - `Err(e)` - when an error occurred
+    #[instrument(skip(self))]
+    pub async fn competitions_available_for_registration(
+        &self,
+        participant_id: Uuid,
+    ) -> Result<Option<Vec<model::Competition>>> {
+        let Some(participant) = self.participant_details(participant_id).await? else {
+            return Ok(None);
+        };
+
+        let available_competitions = self
+            .competition_repo
+            .all_competitions()
+            .await?
+            .into_iter()
+            .filter(|c| {
+                !participant
+                    .registrations
+                    .iter()
+                    .any(|r| r.competition.id == c.id)
+            })
+            .map(model::Competition::from)
+            .collect();
+
+        Ok(Some(available_competitions))
+    }
 }
 
 impl From<db::participants::Participant> for model::Participant {

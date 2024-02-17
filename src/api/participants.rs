@@ -19,6 +19,10 @@ pub fn router() -> Router<AppState> {
         .route("/", post(add_participant))
         .route("/:participant_id", get(participant_details))
         .route("/:participant_id", delete(remove_participant))
+        .route(
+            "/:participant_id/registrations/available-competitions",
+            get(available_competitions),
+        )
 }
 
 async fn list_participants(
@@ -33,7 +37,10 @@ async fn list_participants(
         Ok(p) => Ok((StatusCode::OK, Json(p))),
         Err(e) => {
             tracing::error!("{e:#?}");
-            Err(StatusCode::INTERNAL_SERVER_ERROR)
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Internal Server Error".to_string(),
+            ))
         }
     }
 }
@@ -49,10 +56,16 @@ async fn participant_details(
         .context("Failed to handle participant details request")
     {
         Ok(Some(p)) => Ok((StatusCode::OK, Json(p))),
-        Ok(None) => Err(StatusCode::NOT_FOUND),
+        Ok(None) => Err((
+            StatusCode::NOT_FOUND,
+            "Participant does not exist".to_string(),
+        )),
         Err(e) => {
             tracing::error!("{e:#?}");
-            Err(StatusCode::INTERNAL_SERVER_ERROR)
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Internal Server Error".to_string(),
+            ))
         }
     }
 }
@@ -78,7 +91,10 @@ async fn add_participant(
         Ok(p) => Ok((StatusCode::CREATED, Json(p))),
         Err(e) => {
             tracing::error!("{e:#?}");
-            Err(StatusCode::INTERNAL_SERVER_ERROR)
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Internal Server Error".to_string(),
+            ))
         }
     }
 }
@@ -92,21 +108,51 @@ async fn remove_participant(
     Path(participant_id): Path<Uuid>,
     Query(params): Query<RemoveParticipantParameters>,
     State(state): State<AppState>,
-) -> ApiResponse<&'static str> {
+) -> ApiResponse<()> {
     let participant_service = state.participant_service();
     match participant_service
         .remove_participant(participant_id, params.cascade.unwrap_or_default())
         .await
     {
-        Ok(Some(true)) => Ok((StatusCode::OK, "")),
-        Ok(Some(false)) => Ok((
+        Ok(Some(true)) => Ok((StatusCode::OK, ())),
+        Ok(Some(false)) => Err((
             StatusCode::BAD_REQUEST,
-            "Participant can't be deleted as there are still registrations.",
+            "Participant can't be deleted as there are still registrations.".to_string(),
         )),
-        Ok(None) => Ok((StatusCode::NOT_FOUND, "Participant does not exist")),
+        Ok(None) => Err((
+            StatusCode::NOT_FOUND,
+            "Participant does not exist".to_string(),
+        )),
         Err(e) => {
             tracing::error!("{e:#?}");
-            Err(StatusCode::INTERNAL_SERVER_ERROR)
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Internal Server Error".to_string(),
+            ))
+        }
+    }
+}
+
+async fn available_competitions(
+    Path(participant_id): Path<Uuid>,
+    State(state): State<AppState>,
+) -> ApiResponse<Json<Vec<model::Competition>>> {
+    let participant_service = state.participant_service();
+    match participant_service
+        .competitions_available_for_registration(participant_id)
+        .await
+    {
+        Ok(Some(c)) => Ok((StatusCode::OK, Json(c))),
+        Ok(None) => Err((
+            StatusCode::NOT_FOUND,
+            "Participant does not exist".to_string(),
+        )),
+        Err(e) => {
+            tracing::error!("{e:#?}");
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Internal Server Error".to_string(),
+            ))
         }
     }
 }
