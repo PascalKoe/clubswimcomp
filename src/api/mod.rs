@@ -3,8 +3,10 @@ use axum::Router;
 
 use crate::db;
 use crate::services::ParticipantService;
+use crate::services::ResultService;
 
 mod participants;
+mod results;
 
 type ApiResponse<T> = Result<(StatusCode, T), (StatusCode, String)>;
 
@@ -31,8 +33,18 @@ impl AppState {
             self.competition_repo.clone(),
         )
     }
+
+    pub fn result_service(&self) -> ResultService {
+        ResultService::new(
+            self.participant_repo.clone(),
+            self.registration_repo.clone(),
+            self.competition_repo.clone(),
+        )
+    }
 }
 
 pub fn routes() -> Router<AppState> {
-    Router::new().nest("/participants", participants::router())
+    Router::new()
+        .nest("/participants", participants::router())
+        .nest("/results", results::router())
 }

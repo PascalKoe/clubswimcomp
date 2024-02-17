@@ -184,4 +184,29 @@ impl Repository {
         .await
         .context("Failed to fetch registrations by id from database")
     }
+
+    pub async fn create_registration_result(
+        &self,
+        registration_id: Uuid,
+        time_millis: i32,
+        disqualified: bool,
+    ) -> Result<()> {
+        sqlx::query!(
+            r#"
+                INSERT INTO registration_results (
+                    registration_id, time_millis, disqualified
+                ) VALUES (
+                    $1, $2, $3
+                );
+            "#,
+            registration_id,
+            time_millis,
+            disqualified
+        )
+        .execute(&self.pool)
+        .await
+        .context("Failed to insert registration in database")?;
+
+        Ok(())
+    }
 }
