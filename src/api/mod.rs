@@ -1,9 +1,12 @@
-use axum::Router;
+use axum::http::StatusCode;
+use axum::{Json, Router};
 
 use crate::db;
 use crate::services::ParticipantService;
 
 mod participants;
+
+type ApiResponse<T> = Result<(StatusCode, Json<T>), StatusCode>;
 
 #[derive(Clone)]
 pub struct AppState {
