@@ -232,7 +232,8 @@ impl ParticipantService {
                 .registration_repo
                 .delete_result_for_registration(registration.id)
                 .await
-                .context("Failed to delete registration result while removing registration")?;
+                .context("Failed to delete registration result while removing registration")?
+                .is_some();
 
             if !existed {
                 tracing::warn!(
