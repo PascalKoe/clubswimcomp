@@ -27,6 +27,10 @@ pub fn router() -> Router<AppState> {
             "/:participant_id/registrations",
             post(register_for_competition),
         )
+        .route(
+            "/:participant_id/registrations/:registration_id",
+            delete(unregister_from_competition),
+        )
 }
 
 async fn list_participants(
@@ -180,6 +184,27 @@ async fn register_for_competition(
         Ok(None) => Err((
             StatusCode::BAD_REQUEST,
             "Participant or competition does not exist".to_string(),
+        )),
+        Err(_) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Internal Server Error".to_string(),
+        )),
+    }
+}
+
+async fn unregister_from_competition(
+    Path((_participant_id, registration_id)): Path<(Uuid, Uuid)>,
+    State(state): State<AppState>,
+) -> ApiResponse<()> {
+    let participant_service = state.participant_service();
+    match participant_service
+        .unregister_from_competition(registration_id)
+        .await
+    {
+        Ok(Some(_)) => Ok((StatusCode::OK, ())),
+        Ok(None) => Err((
+            StatusCode::NOT_FOUND,
+            "The registration does not exist".to_string(),
         )),
         Err(_) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,

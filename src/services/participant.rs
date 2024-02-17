@@ -339,6 +339,31 @@ impl ParticipantService {
 
         Ok(Some(registration))
     }
+
+    /// Unregister from a competition.
+    ///
+    /// # Parameters:
+    /// - `registration_id` - The id of the registration
+    ///
+    /// # Returns:
+    /// - `Ok(Some())` - if the registration was undone
+    /// - `Ok(None)` - if the registration was not found
+    /// - `Err(e)` - when an error happens
+    pub async fn unregister_from_competition(&self, registration_id: Uuid) -> Result<Option<()>> {
+        self.registration_repo
+            .delete_result_for_registration(registration_id)
+            .await?;
+        let registration_existed = self
+            .registration_repo
+            .delete_registration(registration_id)
+            .await?;
+
+        if registration_existed {
+            Ok(Some(()))
+        } else {
+            Ok(None)
+        }
+    }
 }
 
 impl From<db::participants::Participant> for model::Participant {
