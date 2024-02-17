@@ -2,7 +2,7 @@ use anyhow::Result;
 use tracing::instrument;
 use uuid::Uuid;
 
-use crate::db::{self, DatabasePool};
+use crate::db;
 
 pub struct ResultService {
     participant_repo: db::participants::Repository,
@@ -67,5 +67,21 @@ impl ResultService {
             .await?;
 
         Ok(Some(()))
+    }
+
+    /// Delete a result for a registration.
+    ///
+    /// # Parameters:
+    /// - `registration_id` - The id of the registration
+    ///
+    /// # Returns:
+    /// - `Ok(Some(())` - if the result was deleted
+    /// - `Ok(None)` - if the result does not exist
+    /// - `Err(e)` - in case of an error
+    #[instrument(skip(self))]
+    pub async fn delete_result(&self, registration_id: Uuid) -> Result<Option<()>> {
+        self.registration_repo
+            .delete_result_for_registration(registration_id)
+            .await
     }
 }
