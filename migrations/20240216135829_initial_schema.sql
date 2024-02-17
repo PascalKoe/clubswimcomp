@@ -30,17 +30,14 @@ CREATE TABLE competitions (
 	id			UUID			PRIMARY KEY NOT NULL,
 	gender		gender			NOT NULL,
 	stroke		stroke			NOT NULL,
-	distance	INT				NOT NULL 					CHECK((distance % 25) = 0 AND distance > 0),
-	min_age		INT				NULL 						CHECK(min_age >= 0),
-	max_age		INT				NULL 						CHECK(max_age >= 0),
-
-	CONSTRAINT min_max_age CHECK (min_age <= max_age)
+	distance	INT				NOT NULL 					CHECK((distance % 25) = 0 AND distance > 0)
 );
 
 CREATE TABLE registrations (
 	id					UUID			PRIMARY KEY NOT NULL,
 	participant_id		UUID			NOT NULL					REFERENCES participants(id),
-	competition_id		UUID			NOT NULL					REFERENCES competitions(id)
+	competition_id		UUID			NOT NULL					REFERENCES competitions(id),
+	CONSTRAINT one_registration_per_participant UNIQUE(participant_id, competition_id)
 );
 
 CREATE TABLE registration_results (

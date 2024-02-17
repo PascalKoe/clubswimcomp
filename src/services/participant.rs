@@ -300,8 +300,6 @@ impl From<db::competitions::Competition> for model::Competition {
             gender: c.gender.into(),
             distance: c.distance as _,
             stroke: c.stroke.into(),
-            min_age: c.min_age.map(|age| age as _),
-            max_age: c.max_age.map(|age| age as _),
         }
     }
 }

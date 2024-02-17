@@ -40,8 +40,6 @@ pub struct Competition {
     pub gender: Gender,
     pub distance: u32,
     pub stroke: Stroke,
-    pub min_age: Option<u32>,
-    pub max_age: Option<u32>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -81,6 +79,11 @@ POST    /participants
 GET     /participants/<PARTICIPANT-ID>
 // Delete Participant
 DELETE  /participants/<PARTICIPANT-ID>
+
+
+
+
+
 
 // List available competitions
 GET     /participants/<PARTICIPANT-ID>/available-competitions

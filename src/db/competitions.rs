@@ -6,8 +6,6 @@ pub struct Competition {
     pub gender: super::Gender,
     pub stroke: super::Stroke,
     pub distance: i32,
-    pub min_age: Option<i32>,
-    pub max_age: Option<i32>,
 }
 
 #[derive(Clone)]
@@ -25,8 +23,7 @@ impl Repository {
             Competition,
             r#"
                 SELECT
-                    id, gender AS "gender: _", stroke AS "stroke: _", distance,
-                    min_age, max_age
+                    id, gender AS "gender: _", stroke AS "stroke: _", distance
                 FROM competitions
                 WHERE id = $1;
             "#,
