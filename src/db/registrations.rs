@@ -23,7 +23,10 @@ impl Repository {
         Self { pool }
     }
 
-    pub async fn list_for_participant(&self, participant_id: Uuid) -> Result<Vec<Registration>> {
+    pub async fn registrations_of_participant(
+        &self,
+        participant_id: Uuid,
+    ) -> Result<Vec<Registration>> {
         sqlx::query_as!(
             Registration,
             r#"
@@ -68,10 +71,10 @@ impl Repository {
     ///   deleted.
     ///
     /// # Results:
-    /// - `Ok(true)` - if the result has been deleted
-    /// - `Ok(false)` - if the result did not exist
+    /// - `Ok(Some(()))` - if the result has been deleted
+    /// - `Ok(None)` - if the result did not exist
     /// - `Err(e)` - in case of an database error
-    pub async fn delete_registration(&self, registration_id: Uuid) -> Result<bool> {
+    pub async fn delete_registration(&self, registration_id: Uuid) -> Result<Option<()>> {
         let rows = sqlx::query!(
             r#"
                 DELETE FROM registrations
@@ -84,7 +87,11 @@ impl Repository {
         .context("Failed to delete registration in database")?
         .rows_affected();
 
-        Ok(rows > 0)
+        if rows > 0 {
+            Ok(Some(()))
+        } else {
+            Ok(None)
+        }
     }
 
     /// Delete a result of a registration.

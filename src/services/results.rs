@@ -1,8 +1,33 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
+use thiserror::Error;
 use tracing::instrument;
 use uuid::Uuid;
 
 use crate::db;
+
+#[derive(Debug, Error)]
+pub enum AddRegistrationResultError {
+    #[error("The registration already has a result")]
+    ResultAlreadyExists,
+
+    #[error("The registration does not exist")]
+    RegistrationDoesNotExist,
+
+    #[error("The repository ran into an error: {0:#?}")]
+    RepositoryError(#[from] anyhow::Error),
+}
+
+#[derive(Debug, Error)]
+pub enum RemoveRegistrationResultError {
+    #[error("The registration does not exist")]
+    RegistrationDoesNotExist,
+
+    #[error("The registration does not have any result")]
+    RegistrationHasNoResult,
+
+    #[error("The repository ran into an error: {0:#?}")]
+    RepositoryError(#[from] anyhow::Error),
+}
 
 pub struct ResultService {
     participant_repo: db::participants::Repository,
@@ -30,46 +55,39 @@ impl ResultService {
     /// - `disqualified` - `true` is the participant is disqualified, `false`
     ///   otherwise.
     /// - `time_millis` - The result time of the participant in milliseconds.
-    ///
-    /// # Returns:
-    /// - `Ok(Some(())` - if the result was entered
-    /// - `Ok(None)` - if the registration does not exist
-    /// - `Err(e)` - in case of an error
     #[instrument(skip(self))]
-    pub async fn enter_result_for_registration(
+    pub async fn add_result_for_registration(
         &self,
         registration_id: Uuid,
         disqualified: bool,
         time_millis: u32,
-    ) -> Result<Option<()>> {
-        if self
+    ) -> Result<(), AddRegistrationResultError> {
+        tracing::debug!("Ensuring the registration actually exists");
+        self.registration_repo
+            .registration_by_id(registration_id)
+            .await
+            .context("Failed to search registration by id in repository")?
+            .ok_or(AddRegistrationResultError::RegistrationDoesNotExist)?;
+
+        tracing::debug!("Ensuring no result already exists for registration");
+        if let Some(_) = self
             .registration_repo
             .result_for_registration(registration_id)
-            .await?
-            .is_some()
+            .await
+            .context("Failed to search for registration result in repository")?
         {
-            tracing::info!("Tried to add result for registration, that already has a result");
-            return Ok(None);
+            return Err(AddRegistrationResultError::ResultAlreadyExists);
         }
 
-        if self
-            .registration_repo
-            .registration_by_id(registration_id)
-            .await?
-            .is_none()
-        {
-            tracing::info!("Tried to add result for registration, that does not exist");
-            return Ok(None);
-        }
-
+        tracing::debug!("Creating registration result in repository");
         self.registration_repo
             .create_registration_result(registration_id, time_millis as _, disqualified)
-            .await?;
-
-        Ok(Some(()))
+            .await
+            .context("Failed to create result for registration in repository")
+            .map_err(AddRegistrationResultError::from)
     }
 
-    /// Delete a result for a registration.
+    /// Remove a result for a registration.
     ///
     /// # Parameters:
     /// - `registration_id` - The id of the registration
@@ -79,9 +97,22 @@ impl ResultService {
     /// - `Ok(None)` - if the result does not exist
     /// - `Err(e)` - in case of an error
     #[instrument(skip(self))]
-    pub async fn delete_result(&self, registration_id: Uuid) -> Result<Option<()>> {
+    pub async fn remove_registration_result(
+        &self,
+        registration_id: Uuid,
+    ) -> Result<(), RemoveRegistrationResultError> {
+        tracing::debug!("Ensuring the registration actually exists");
+        self.registration_repo
+            .registration_by_id(registration_id)
+            .await
+            .context("Failed to search registration by id in repository")?
+            .ok_or(RemoveRegistrationResultError::RegistrationDoesNotExist)?;
+
+        tracing::debug!("Trying to delete the registration result in the repository");
         self.registration_repo
             .delete_result_for_registration(registration_id)
             .await
+            .context("Failed to delete registration result in repository")?
+            .ok_or(RemoveRegistrationResultError::RegistrationHasNoResult)
     }
 }

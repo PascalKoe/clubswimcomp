@@ -1,14 +1,73 @@
 use axum::http::StatusCode;
+use axum::response::IntoResponse;
 use axum::Router;
+use axum::{
+    extract::{Path, State},
+    routing::*,
+    Json,
+};
 
 use crate::db;
-use crate::services::ParticipantService;
 use crate::services::ResultService;
+use crate::services::{ParticipantService, ServiceRepositoryError};
 
 mod participants;
 mod results;
 
-type ApiResponse<T> = Result<(StatusCode, T), (StatusCode, String)>;
+type Result<T, Err = ApiError> = std::result::Result<(StatusCode, T), Err>;
+
+struct ApiError {
+    status_code: StatusCode,
+    message: String,
+    internal_message: String,
+}
+
+impl ApiError {
+    pub fn with_message(status_code: StatusCode, message: String) -> Self {
+        Self {
+            status_code,
+            message,
+            internal_message: String::new(),
+        }
+    }
+
+    pub fn with_internal_message(status_code: StatusCode, internal_message: String) -> Self {
+        Self {
+            status_code,
+            message: String::new(),
+            internal_message,
+        }
+    }
+}
+
+impl<T> From<T> for ApiError
+where
+    T: std::error::Error,
+    for<'a> &'a T: Into<StatusCode>,
+{
+    fn from(err: T) -> Self {
+        let status_code: StatusCode = (&err).into();
+        if status_code.is_server_error() {
+            ApiError::with_internal_message(status_code, err.to_string())
+        } else {
+            ApiError::with_message(status_code, err.to_string())
+        }
+    }
+}
+
+impl IntoResponse for ApiError {
+    fn into_response(self) -> axum::response::Response {
+        (self.status_code, self.message).into_response()
+    }
+}
+
+impl From<&ServiceRepositoryError> for StatusCode {
+    fn from(err: &ServiceRepositoryError) -> Self {
+        match err {
+            ServiceRepositoryError::RepositoryError(_) => Self::INTERNAL_SERVER_ERROR,
+        }
+    }
+}
 
 #[derive(Clone)]
 pub struct AppState {
