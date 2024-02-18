@@ -1,6 +1,8 @@
+mod competition;
 mod participant;
 mod results;
 
+pub use competition::*;
 pub use participant::*;
 pub use results::*;
 

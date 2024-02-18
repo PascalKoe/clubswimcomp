@@ -1,16 +1,12 @@
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Router;
-use axum::{
-    extract::{Path, State},
-    routing::*,
-    Json,
-};
 
 use crate::db;
-use crate::services::ResultService;
+use crate::services::{CompetitionService, ResultService};
 use crate::services::{ParticipantService, ServiceRepositoryError};
 
+mod competitions;
 mod participants;
 mod results;
 
@@ -100,10 +96,19 @@ impl AppState {
             self.competition_repo.clone(),
         )
     }
+
+    pub fn competition_service(&self) -> CompetitionService {
+        CompetitionService::new(
+            self.participant_repo.clone(),
+            self.registration_repo.clone(),
+            self.competition_repo.clone(),
+        )
+    }
 }
 
 pub fn routes() -> Router<AppState> {
     Router::new()
         .nest("/participants", participants::router())
         .nest("/results", results::router())
+        .nest("/competitions", competitions::router())
 }

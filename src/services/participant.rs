@@ -1,13 +1,10 @@
 use anyhow::{Context, Result};
-use chrono::{NaiveDate, Utc};
+use chrono::NaiveDate;
 use thiserror::Error;
 use tracing::instrument;
 use uuid::Uuid;
 
-use crate::{
-    db,
-    model::{self, ParticipantRegistration},
-};
+use crate::{db, model};
 
 use super::ServiceRepositoryError;
 

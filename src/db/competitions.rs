@@ -20,6 +20,29 @@ impl Repository {
         Self { pool }
     }
 
+    pub async fn create_competition(
+        &self,
+        gender: Gender,
+        stroke: Stroke,
+        distance: i32,
+    ) -> Result<Uuid> {
+        sqlx::query_scalar!(
+            r#"
+                INSERT INTO competitions (
+                    gender, stroke, distance
+                ) VALUES (
+                    $1, $2, $3
+                ) RETURNING id;
+            "#,
+            gender as Gender,
+            stroke as Stroke,
+            distance,
+        )
+        .fetch_one(&self.pool)
+        .await
+        .context("Failed to execute INSERT INTO query")
+    }
+
     pub async fn search_competition(
         &self,
         gender: Option<Gender>,
