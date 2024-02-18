@@ -8,7 +8,9 @@ use crate::{model, services::AddCompetitionError};
 use super::{ApiError, AppState};
 
 pub fn router() -> axum::Router<super::AppState> {
-    Router::new().route("/", post(add_competition))
+    Router::new()
+        .route("/", get(list_competitions))
+        .route("/", post(add_competition))
 }
 
 impl From<&AddCompetitionError> for StatusCode {
@@ -19,6 +21,15 @@ impl From<&AddCompetitionError> for StatusCode {
             AddCompetitionError::RepositoryError(_) => Self::INTERNAL_SERVER_ERROR,
         }
     }
+}
+
+#[instrument(skip(state))]
+async fn list_competitions(
+    State(state): State<AppState>,
+) -> Result<Json<Vec<model::Competition>>, ApiError> {
+    let competition_service = state.competition_service();
+    let competitions = competition_service.list_competitions().await?;
+    Ok(Json(competitions))
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]

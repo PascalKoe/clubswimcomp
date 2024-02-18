@@ -5,6 +5,8 @@ use uuid::Uuid;
 
 use crate::{db, model};
 
+use super::ServiceRepositoryError;
+
 pub struct CompetitionService {
     participant_repo: db::participants::Repository,
     registration_repo: db::registrations::Repository,
@@ -34,6 +36,23 @@ impl CompetitionService {
             registration_repo,
             competition_repo,
         }
+    }
+
+    #[instrument(skip(self))]
+    pub async fn list_competitions(
+        &self,
+    ) -> Result<Vec<model::Competition>, ServiceRepositoryError> {
+        tracing::debug!("Loading competitions from repository");
+        let competitions = self
+            .competition_repo
+            .all_competitions()
+            .await
+            .context("Failed to fetch competitions from repository")?
+            .into_iter()
+            .map(model::Competition::from)
+            .collect();
+
+        Ok(competitions)
     }
 
     #[instrument(skip(self))]
