@@ -30,14 +30,15 @@ CREATE TABLE competitions (
 	id			UUID			PRIMARY KEY NOT NULL		DEFAULT gen_random_uuid(),
 	gender		gender			NOT NULL,
 	stroke		stroke			NOT NULL,
-	distance	INT				NOT NULL 					CHECK((distance % 25) = 0 AND distance > 0)
+	distance	INT				NOT NULL 					CHECK((distance % 25) = 0 AND distance > 0),
+	CONSTRAINT no_same_competitions UNIQUE (gender, stroke, distance)
 );
 
 CREATE TABLE registrations (
 	id					UUID			PRIMARY KEY NOT NULL		DEFAULT gen_random_uuid(),
 	participant_id		UUID			NOT NULL					REFERENCES participants(id),
 	competition_id		UUID			NOT NULL					REFERENCES competitions(id),
-	CONSTRAINT one_registration_per_participant UNIQUE(participant_id, competition_id)
+	CONSTRAINT one_registration_per_participant UNIQUE (participant_id, competition_id)
 );
 
 CREATE TABLE registration_results (

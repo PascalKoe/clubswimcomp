@@ -270,10 +270,9 @@ impl ParticipantService {
 
         let available_competitions = self
             .competition_repo
-            .all_competitions()
+            .search_competition(Some(participant.participant.gender.into()), None, None)
             .await?
             .into_iter()
-            .filter(|c| c.gender == participant.participant.gender.into())
             .filter(|c| {
                 !participant
                     .registrations
