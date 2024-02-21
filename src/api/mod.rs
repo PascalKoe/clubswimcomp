@@ -10,8 +10,6 @@ mod competitions;
 mod participants;
 mod results;
 
-type Result<T, Err = ApiError> = std::result::Result<(StatusCode, T), Err>;
-
 struct ApiError {
     status_code: StatusCode,
     message: String,

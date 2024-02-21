@@ -223,4 +223,27 @@ impl Repository {
 
         Ok(())
     }
+
+    /// Get all registrations for the given competition.
+    ///
+    /// Gets all registrations for the given competition withouth checking if the comptition
+    /// actually exists. In case it does not exist, an empty vec is returned.
+    ///
+    /// # Parameters:
+    /// - `competition_id` - The id of the competition to load the registrations for.
+    pub async fn registrations_for_competition(&self, competition_id: Uuid) -> Result<Vec<Registration>> {
+        sqlx::query_as!(
+            Registration,
+            r#"
+                SELECT
+                    id, participant_id, competition_id
+                FROM registrations
+                WHERE competition_id = $1;
+            "#,
+            competition_id
+        )
+        .fetch_all(&self.pool)
+        .await
+        .context("Failed to fetch list of all registrations for competition from database")
+    }
 }

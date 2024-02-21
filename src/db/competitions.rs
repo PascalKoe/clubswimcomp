@@ -98,4 +98,24 @@ impl Repository {
         .await
         .context("Failed to fetch competition by id from database")
     }
+
+    pub async fn delete_competition(&self, competition_id: Uuid) -> Result<Option<()>> {
+        let rows = sqlx::query!(
+            r#"
+                DELETE FROM competitions
+                WHERE id = $1
+            "#,
+            competition_id
+        )
+        .execute(&self.pool)
+        .await
+        .context("Failed to delete competition in database")?
+        .rows_affected();
+
+        if rows > 0 {
+            Ok(Some(()))
+        } else {
+            Ok(None)
+        }
+    }
 }

@@ -25,6 +25,18 @@ pub enum AddCompetitionError {
     RepositoryError(#[from] anyhow::Error),
 }
 
+#[derive(Debug, Error)]
+pub enum DeleteCompetitionError {
+    #[error("The competition does not exist")]
+    CompetitionDoesNotExist,
+
+    #[error("The competition can not be deleted while there are still registrations for it")]
+    CompetitionHasRegistrations,
+
+    #[error("The repository ran into an error: {0:#?}")]
+    RepositoryError(#[from] anyhow::Error),
+}
+
 impl CompetitionService {
     pub fn new(
         participant_repo: db::participants::Repository,
@@ -93,5 +105,54 @@ impl CompetitionService {
             .context("Failed to create competition in repository")?;
 
         Ok(competition_id)
+    }
+
+    #[instrument(skip(self))]
+    pub async fn delete_competition(
+        &self,
+        competition_id: Uuid,
+        force_delete: bool,
+    ) -> Result<(), DeleteCompetitionError> {
+        tracing::debug!("Ensuring the competition actually exists");
+        let _competition = self
+            .competition_repo
+            .competition_by_id(competition_id)
+            .await
+            .context("Failed to fetch competition from repository")?
+            .ok_or(DeleteCompetitionError::CompetitionDoesNotExist)?;
+
+        tracing::debug!("Fetching registrations for competition from repository");
+        let registrations = self
+            .registration_repo
+            .registrations_for_competition(competition_id)
+            .await
+            .context("Failed to fetch registrations for competition from repository")?;
+        if registrations.len() > 0 && !force_delete {
+            tracing::debug!(
+                "Tried to delete competition with registrations and without force delete flag"
+            );
+            return Err(DeleteCompetitionError::CompetitionHasRegistrations);
+        } else if registrations.len() > 0 {
+            tracing::debug!("Force deleting the registrations of the competition");
+            for registration in registrations.iter() {
+                tracing::debug!(registration_id = ?registration.id, "Deleting result for registration from respository");
+                self.registration_repo
+                    .delete_result_for_registration(registration.id)
+                    .await
+                    .context("Failed to delete registration result in repository")?;
+
+                tracing::debug!("Deleting registration from respository");
+                self.registration_repo
+                    .delete_registration(registration.id)
+                    .await
+                    .context("Failed to delete registration in repository")?;
+            }
+            tracing::debug!("Deleted all registrations for competition from repository");
+        }
+
+        tracing::debug!("Deleting competition from repository");
+        self.competition_repo.delete_competition(competition_id).await.context("Failed to delete competition in repository")?;
+
+        Ok(())
     }
 }
