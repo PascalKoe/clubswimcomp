@@ -1,10 +1,10 @@
 mod competition;
 mod participant;
-mod results;
+mod registration;
 
 pub use competition::*;
 pub use participant::*;
-pub use results::*;
+pub use registration::*;
 
 use thiserror::Error;
 

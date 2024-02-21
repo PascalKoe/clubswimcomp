@@ -3,8 +3,9 @@ use axum::response::IntoResponse;
 use axum::Router;
 
 use crate::db;
-use crate::services::{CompetitionService, ResultService};
-use crate::services::{ParticipantService, ServiceRepositoryError};
+use crate::services::{
+    CompetitionService, ParticipantService, RegistrationService, ServiceRepositoryError,
+};
 
 mod competitions;
 mod participants;
@@ -87,8 +88,8 @@ impl AppState {
         )
     }
 
-    pub fn result_service(&self) -> ResultService {
-        ResultService::new(
+    pub fn registration_service(&self) -> RegistrationService {
+        RegistrationService::new(
             self.participant_repo.clone(),
             self.registration_repo.clone(),
             self.competition_repo.clone(),

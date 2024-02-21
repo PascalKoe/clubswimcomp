@@ -29,13 +29,13 @@ pub enum RemoveRegistrationResultError {
     RepositoryError(#[from] anyhow::Error),
 }
 
-pub struct ResultService {
+pub struct RegistrationService {
     participant_repo: db::participants::Repository,
     registration_repo: db::registrations::Repository,
     competition_repo: db::competitions::Repository,
 }
 
-impl ResultService {
+impl RegistrationService {
     pub fn new(
         participant_repo: db::participants::Repository,
         registration_repo: db::registrations::Repository,

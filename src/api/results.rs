@@ -50,7 +50,7 @@ async fn add_registration_result(
     State(state): State<AppState>,
     Json(b): Json<EnterResultBody>,
 ) -> Result<(), ApiError> {
-    let result_service = state.result_service();
+    let result_service = state.registration_service();
     result_service
         .add_result_for_registration(b.registration_id, b.disqualified, b.time_millis)
         .await
@@ -62,7 +62,7 @@ async fn delete_result(
     State(state): State<AppState>,
     Path(registration_id): Path<Uuid>,
 ) -> Result<(), ApiError> {
-    let registration_service = state.result_service();
+    let registration_service = state.registration_service();
     registration_service
         .remove_registration_result(registration_id)
         .await
