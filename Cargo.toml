@@ -1,4 +1,8 @@
 [workspace]
+resolver = "2"
 members = [
-    "clubswimcomp-service"
+    "clubswimcomp-service",
+    "clubswimcomp-ui"
 ]
+
+
