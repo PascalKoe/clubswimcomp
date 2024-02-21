@@ -37,6 +37,15 @@ pub enum DeleteCompetitionError {
     RepositoryError(#[from] anyhow::Error),
 }
 
+#[derive(Debug, Error)]
+pub enum CompetitionDetailsError {
+    #[error("The competition does not exist")]
+    CompetitionDoesNotExist,
+
+    #[error("The repository ran into an error: {0:#?}")]
+    RepositoryError(#[from] anyhow::Error),
+}
+
 impl CompetitionService {
     pub fn new(
         participant_repo: db::participants::Repository,
@@ -157,5 +166,57 @@ impl CompetitionService {
             .context("Failed to delete competition in repository")?;
 
         Ok(())
+    }
+
+    pub async fn competition_details(
+        &self,
+        competition_id: Uuid,
+    ) -> Result<model::CompetitionDetails, CompetitionDetailsError> {
+        tracing::debug!("Fetching competition from repository");
+        let competition = self
+            .competition_repo
+            .competition_by_id(competition_id)
+            .await
+            .context("Failed to fetch competition from repository")?
+            .map(model::Competition::from)
+            .ok_or(CompetitionDetailsError::CompetitionDoesNotExist)?;
+
+        tracing::debug!("Fetching registrations for competition from repository");
+        let db_registrations = self
+            .registration_repo
+            .registrations_for_competition(competition_id)
+            .await
+            .context("Failed to fetch registrations for competition from repository")?;
+
+        let mut registrations = Vec::with_capacity(db_registrations.len());
+        for registration in db_registrations.into_iter() {
+            tracing::debug!(registration_id = ?registration.id, "Fetching result for registration from repository");
+            let result = self
+                .registration_repo
+                .result_for_registration(registration.id)
+                .await
+                .context("Failed to fetch result for registration from repository")?
+                .map(model::RegistrationResult::from);
+
+            tracing::debug!(participant_id = ?registration.participant_id, "Fetching participant for registration");
+            let participant = self
+                .participant_repo
+                .participant_by_id(registration.participant_id)
+                .await
+                .context("Failed to fetch participant from repository")?
+                .map(model::Participant::from)
+                .ok_or(anyhow::anyhow!("Participant is reference in the registration but does not exist in the repository"))?;
+
+            registrations.push(model::CompetitionRegistration {
+                id: registration.id,
+                participant,
+                result,
+            });
+        }
+
+        Ok(model::CompetitionDetails {
+            competition,
+            registrations,
+        })
     }
 }

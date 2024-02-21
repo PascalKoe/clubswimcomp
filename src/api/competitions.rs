@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use crate::{
     model,
-    services::{AddCompetitionError, DeleteCompetitionError},
+    services::{AddCompetitionError, CompetitionDetailsError, DeleteCompetitionError},
 };
 
 use super::{ApiError, AppState};
@@ -14,6 +14,7 @@ pub fn router() -> axum::Router<super::AppState> {
     Router::new()
         .route("/", get(list_competitions))
         .route("/", post(add_competition))
+        .route("/:competition_id", get(competition_details))
         .route("/:competition_id", delete(delete_competition))
 }
 
@@ -23,6 +24,15 @@ impl From<&AddCompetitionError> for StatusCode {
             AddCompetitionError::InvalidDistance => Self::BAD_REQUEST,
             AddCompetitionError::SameCompetitionExists => Self::BAD_REQUEST,
             AddCompetitionError::RepositoryError(_) => Self::INTERNAL_SERVER_ERROR,
+        }
+    }
+}
+
+impl From<&CompetitionDetailsError> for StatusCode {
+    fn from(err: &CompetitionDetailsError) -> Self {
+        match err {
+            CompetitionDetailsError::CompetitionDoesNotExist => Self::NOT_FOUND,
+            CompetitionDetailsError::RepositoryError(_) => Self::INTERNAL_SERVER_ERROR,
         }
     }
 }
@@ -69,6 +79,19 @@ async fn add_competition(
         .await?;
 
     Ok(Json(AddCompetitionResponse { competition_id }))
+}
+
+#[instrument(skip(state))]
+async fn competition_details(
+    State(state): State<AppState>,
+    Path(competition_id): Path<Uuid>,
+) -> Result<Json<model::CompetitionDetails>, ApiError> {
+    let competition_service = state.competition_service();
+    let competition_details = competition_service
+        .competition_details(competition_id)
+        .await?;
+
+    Ok(Json(competition_details))
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
