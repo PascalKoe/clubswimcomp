@@ -70,11 +70,12 @@ impl ResultService {
             .ok_or(AddRegistrationResultError::RegistrationDoesNotExist)?;
 
         tracing::debug!("Ensuring no result already exists for registration");
-        if let Some(_) = self
+        if self
             .registration_repo
             .result_for_registration(registration_id)
             .await
             .context("Failed to search for registration result in repository")?
+            .is_some()
         {
             return Err(AddRegistrationResultError::ResultAlreadyExists);
         }

@@ -231,7 +231,10 @@ impl Repository {
     ///
     /// # Parameters:
     /// - `competition_id` - The id of the competition to load the registrations for.
-    pub async fn registrations_for_competition(&self, competition_id: Uuid) -> Result<Vec<Registration>> {
+    pub async fn registrations_for_competition(
+        &self,
+        competition_id: Uuid,
+    ) -> Result<Vec<Registration>> {
         sqlx::query_as!(
             Registration,
             r#"

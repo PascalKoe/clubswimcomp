@@ -1,4 +1,4 @@
-use axum::{extract::*, http::StatusCode, routing::*, Router};
+use axum::{extract::*, http::StatusCode, routing::*};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;

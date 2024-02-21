@@ -2,7 +2,7 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
     routing::*,
-    Json, Router,
+    Json,
 };
 use serde::{Deserialize, Serialize};
 use tracing::instrument;

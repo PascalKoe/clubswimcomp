@@ -2,7 +2,7 @@ use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
     routing::*,
-    Json, Router,
+    Json,
 };
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};

@@ -127,12 +127,12 @@ impl CompetitionService {
             .registrations_for_competition(competition_id)
             .await
             .context("Failed to fetch registrations for competition from repository")?;
-        if registrations.len() > 0 && !force_delete {
+        if !registrations.is_empty() && !force_delete {
             tracing::debug!(
                 "Tried to delete competition with registrations and without force delete flag"
             );
             return Err(DeleteCompetitionError::CompetitionHasRegistrations);
-        } else if registrations.len() > 0 {
+        } else if !registrations.is_empty() {
             tracing::debug!("Force deleting the registrations of the competition");
             for registration in registrations.iter() {
                 tracing::debug!(registration_id = ?registration.id, "Deleting result for registration from respository");
@@ -151,7 +151,10 @@ impl CompetitionService {
         }
 
         tracing::debug!("Deleting competition from repository");
-        self.competition_repo.delete_competition(competition_id).await.context("Failed to delete competition in repository")?;
+        self.competition_repo
+            .delete_competition(competition_id)
+            .await
+            .context("Failed to delete competition in repository")?;
 
         Ok(())
     }
