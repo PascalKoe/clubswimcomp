@@ -214,8 +214,11 @@ impl CompetitionService {
             });
         }
 
+        let results_pending = registrations.iter().any(|r| r.result.is_none());
+
         Ok(model::CompetitionDetails {
             competition,
+            results_pending,
             registrations,
         })
     }

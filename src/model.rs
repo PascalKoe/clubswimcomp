@@ -124,6 +124,7 @@ impl From<db::competitions::Competition> for Competition {
 pub struct CompetitionDetails {
     #[serde(flatten)]
     pub competition: Competition,
+    pub results_pending: bool,
     pub registrations: Vec<CompetitionRegistration>,
 }
 
