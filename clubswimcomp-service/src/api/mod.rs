@@ -4,10 +4,12 @@ use axum::Router;
 
 use crate::db;
 use crate::services::{
-    CompetitionService, ParticipantService, RegistrationCardService, RegistrationService, ServiceRepositoryError
+    CompetitionService, ParticipantService, RegistrationCardService, RegistrationService,
+    ServiceRepositoryError,
 };
 
 mod competitions;
+mod event;
 mod participants;
 mod results;
 
@@ -121,4 +123,5 @@ pub fn routes() -> Router<AppState> {
         .nest("/participants", participants::router())
         .nest("/results", results::router())
         .nest("/competitions", competitions::router())
+        .nest("/event", event::router())
 }
