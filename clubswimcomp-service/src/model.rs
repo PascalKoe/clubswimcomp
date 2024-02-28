@@ -157,6 +157,23 @@ impl From<db::registrations::RegistrationResult> for RegistrationResult {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+pub struct CompetitionScoreboard {
+    #[serde(flatten)]
+    pub competition: Competition,
+    pub scores: Vec<CompetitionScore>,
+    pub disqualifications: Vec<CompetitionRegistration>,
+    pub missing_results: Vec<CompetitionRegistration>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+pub struct CompetitionScore {
+    #[serde(flatten)]
+    pub participant: Participant,
+    pub result: RegistrationResult,
+    pub rank: u32,
+}
+
 /*
 // List Participants
 GET     /participants

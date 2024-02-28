@@ -5,7 +5,10 @@ use uuid::Uuid;
 
 use crate::{
     model,
-    services::{AddCompetitionError, CompetitionDetailsError, DeleteCompetitionError},
+    services::{
+        AddCompetitionError, CompetitionDetailsError, CompetitionScoreboardError,
+        DeleteCompetitionError,
+    },
 };
 
 use super::{ApiError, AppState};
@@ -16,6 +19,7 @@ pub fn router() -> axum::Router<super::AppState> {
         .route("/", post(add_competition))
         .route("/:competition_id", get(competition_details))
         .route("/:competition_id", delete(delete_competition))
+        .route("/:competition_id/scoreboard", get(competition_scoreboard))
 }
 
 impl From<&AddCompetitionError> for StatusCode {
@@ -43,6 +47,15 @@ impl From<&DeleteCompetitionError> for StatusCode {
             DeleteCompetitionError::CompetitionDoesNotExist => Self::NOT_FOUND,
             DeleteCompetitionError::CompetitionHasRegistrations => Self::BAD_REQUEST,
             DeleteCompetitionError::RepositoryError(_) => Self::INTERNAL_SERVER_ERROR,
+        }
+    }
+}
+
+impl From<&CompetitionScoreboardError> for StatusCode {
+    fn from(err: &CompetitionScoreboardError) -> Self {
+        match err {
+            CompetitionScoreboardError::CompetitionDoesNotExist => Self::NOT_FOUND,
+            CompetitionScoreboardError::RepositoryError(_) => Self::INTERNAL_SERVER_ERROR,
         }
     }
 }
@@ -111,4 +124,17 @@ async fn delete_competition(
         .await?;
 
     Ok(())
+}
+
+#[instrument(skip(state))]
+async fn competition_scoreboard(
+    State(state): State<AppState>,
+    Path(competition_id): Path<Uuid>,
+) -> Result<Json<model::CompetitionScoreboard>, ApiError> {
+    let competition_service = state.competition_service();
+    let scoreboard = competition_service
+        .competition_scoreboard(competition_id)
+        .await?;
+
+    Ok(Json(scoreboard))
 }

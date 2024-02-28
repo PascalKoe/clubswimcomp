@@ -46,6 +46,15 @@ pub enum CompetitionDetailsError {
     RepositoryError(#[from] anyhow::Error),
 }
 
+#[derive(Debug, Error)]
+pub enum CompetitionScoreboardError {
+    #[error("The competition does not exist")]
+    CompetitionDoesNotExist,
+
+    #[error("The repository ran into an error: {0:#?}")]
+    RepositoryError(#[from] anyhow::Error),
+}
+
 impl CompetitionService {
     pub fn new(
         participant_repo: db::participants::Repository,
@@ -220,6 +229,57 @@ impl CompetitionService {
             competition,
             results_pending,
             registrations,
+        })
+    }
+
+    pub async fn competition_scoreboard(
+        &self,
+        competition_id: Uuid,
+    ) -> Result<model::CompetitionScoreboard, CompetitionScoreboardError> {
+        tracing::debug!("Loading competition details from competition service");
+        let competition_details = self
+            .competition_details(competition_id)
+            .await
+            .context("Failed to load competition details")?;
+
+        tracing::debug!("Partitioning registrations into ones with and without result");
+        let registrations = competition_details.registrations;
+        let (with_result, missing_results): (Vec<_>, Vec<_>) =
+            registrations.into_iter().partition(|r| r.result.is_some());
+
+        tracing::debug!("Partitioning results into ones with and without disqualification");
+        let (disqualifications, qualified): (Vec<_>, Vec<_>) =
+            with_result.into_iter().partition(|r| {
+                let result = r.result.as_ref().unwrap();
+                result.disqualified
+            });
+
+        tracing::debug!("Ranking the qualified results");
+        let mut scores = Vec::with_capacity(qualified.len());
+        for registration in qualified.clone().into_iter() {
+            let own_time_millis = registration.result.as_ref().unwrap().time_millis;
+            let faster_registrations = qualified
+                .iter()
+                .filter(|r| r.result.as_ref().unwrap().time_millis < own_time_millis)
+                .count();
+
+            // If there is nobody faster than you (faster_registration == 0), then
+            // you are the first in the ranking.
+            let rank = faster_registrations as u32 + 1;
+            let competition_score = model::CompetitionScore {
+                participant: registration.participant,
+                result: registration.result.unwrap(),
+                rank,
+            };
+
+            scores.push(competition_score);
+        }
+
+        Ok(model::CompetitionScoreboard {
+            competition: competition_details.competition,
+            scores,
+            disqualifications,
+            missing_results,
         })
     }
 }
