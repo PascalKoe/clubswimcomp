@@ -40,7 +40,7 @@ pub async fn compile(
     let args = build_cli_args(output_format, inputs);
 
     // TODO: Make the typst binary path configurable
-    let mut typst_process = Command::new("typst")
+    let mut typst_process = Command::new("/home/pascal/.cargo/bin/typst")
         .env_clear()
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())

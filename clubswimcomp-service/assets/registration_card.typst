@@ -1,0 +1,191 @@
+#let data = json.decode(sys.inputs.registration_cards)
+
+#let event_name = data.event_name
+#let organization = data.organization
+
+#let distance_text(distance) = [#distance m]
+#let stroke_text(stroke) = {
+  let stroke = lower(stroke)
+  if stroke == "butterfly" {
+    "Delphin"
+  } else if stroke == "back" {
+    "Rücken"
+  } else if stroke == "breast" {
+    "Brust"
+  } else if stroke == "freestyle" {
+    "Freistil"
+  } else {
+    "ERROR"
+  }
+}
+#let gender_text(gender) = {
+  let gender = lower(gender)
+  if gender == "female" {
+    "Weiblich"
+  } else if gender == "male" {
+    "Männlich"
+  } else {
+    "ERROR"
+  }
+}
+
+#let text_font = "DejaVu Sans"
+#let content_font = "Inconsolata"
+
+#let footer = [
+  #set text(font: text_font, size: 10pt, weight: "light")
+  #event_name -- #organization
+]
+
+#set page(
+  "a6",
+  flipped: true,
+  margin: 10mm,
+  footer: footer
+)
+
+#let qr_code_size = 25mm
+
+
+
+#let page_width = 148.5mm
+#let page_margin = 10mm
+#let content_width = page_width - 2 * page_margin
+
+#let top_row_height = 45mm
+#let name_section_width = 85mm
+#let machine_section_width = 30mm
+#let spacing_section_width = content_width - name_section_width - machine_section_width
+
+#let top_row_layout(left, right) = stack(
+  dir: ltr,
+  box(width: name_section_width, height: top_row_height, left),
+  box(width: spacing_section_width, height: top_row_height, line(angle: 90deg, length: 100%)),
+  box(width: machine_section_width, height: top_row_height, right)
+)
+
+#let name_section(first_name, last_name) = [
+  #set text(font: content_font, size: 10mm, weight: "bold")
+  #align(top)[
+    #stack(dir: ttb, spacing: 3mm, first_name, last_name)
+  ]
+]
+
+#let competition_section(distance, stroke, gender) = [
+  #set text(font: content_font, size: 10mm, weight: "regular")
+  #align(bottom)[
+    #stack(dir: ttb, spacing: 3mm, [#distance #stroke], gender)
+  ]
+]
+
+#let qr_code_section = [
+  #align(top + right)[
+    #box(width: 25mm, height: 25mm, fill: black)
+  ]
+]
+
+#let participant_number_section(participant_number) = [
+  #align(bottom + right)[
+    #text(font: content_font, size: 15mm, weight: "bold", [#participant_number])
+  ]
+]
+
+#let result_line_height = 8mm
+#let digit_box = box(height: result_line_height, width: result_line_height, stroke: black)
+#let result_label = box(
+  height: result_line_height,
+  text(font: content_font, size: result_line_height * 0.8, "Ergebnis:")
+)
+
+#let minute_seperator = box(
+  height: result_line_height,
+  width: 5mm,
+  align(center)[#text(font: content_font, size: result_line_height * 0.8, ":")]
+)
+
+#let seconds_seperator = box(
+  height: result_line_height,
+  width: 5mm,
+  align(center)[#text(font: content_font, size: result_line_height * 0.8, ",")]
+)
+
+#let result_line = box(
+  height: result_line_height,
+  width: content_width,
+  stack(
+    dir: ltr,
+    align(left + horizon)[#result_label],
+    align(right + horizon)[
+      #digit_box
+      #digit_box
+      #minute_seperator
+      #digit_box
+      #digit_box
+      #seconds_seperator
+      #digit_box
+      #digit_box
+    ]
+  )
+)
+
+#let disqualified_label = box(
+  height: result_line_height,
+  text(font: content_font, size: result_line_height * 0.8, "Disqualifiziert")
+)
+
+#let disqualified_box = box(
+  height: result_line_height,
+  stack(
+    dir: ltr,
+    spacing: 5mm,
+    align(left + horizon)[
+      #digit_box
+    ],
+    align(left + horizon)[#disqualified_label],
+  )
+)
+
+#let disqualified_line = box(
+  height: result_line_height,
+  width: content_width,
+  stack(
+    dir: ltr,
+    spacing: 5mm,
+    disqualified_box,
+    line(angle: 90deg, length: 15mm),
+    text(font: text_font, size: 8pt, "Unterschrift Zeitnehmer(in):")
+  )
+)
+
+
+#let card(first_name, last_name, distance, stroke, gender, participant_number) = [
+  #top_row_layout(
+    [
+      #name_section(first_name, last_name)
+      #competition_section(
+        distance_text(distance),
+        stroke_text(stroke),
+        gender_text(gender)
+      )
+    ],
+    [
+      #qr_code_section
+      #participant_number_section(participant_number)
+    ]
+  )
+  #line(length: 100%)
+  #result_line
+  #disqualified_line
+]
+
+#for start_card in data.cards {
+  card(
+    start_card.first_name,
+    start_card.last_name,
+    start_card.distance,
+    start_card.stroke,
+    start_card.gender,
+    start_card.participant_number
+  )
+  pagebreak(weak: true)
+}
