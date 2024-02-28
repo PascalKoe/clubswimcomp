@@ -13,7 +13,7 @@ pub fn Navbar() -> impl IntoView {
                 <b>ClubSwimComp</b>
             </div>
             <div class="flex-none hidden lg:block">
-                <NavigationDrawer />
+                <NavigationDrawer/>
             </div>
         </div>
     }
@@ -22,10 +22,8 @@ pub fn Navbar() -> impl IntoView {
 #[component]
 fn NavigationDrawer() -> impl IntoView {
     view! {
-        <ul class="menu menu-horizontal">
-        // <li>
         // <a>Navbar Item 1</a>
-        // </li>
+        <ul class="menu menu-horizontal">// </li>
         // <li>
         // <a>Navbar Item 2</a>
         // </li>
