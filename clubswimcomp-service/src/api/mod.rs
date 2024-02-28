@@ -52,6 +52,9 @@ where
 
 impl IntoResponse for ApiError {
     fn into_response(self) -> axum::response::Response {
+        if !self.internal_message.is_empty() {
+            tracing::error!(self.internal_message, "API has internal error message");
+        }
         (self.status_code, self.message).into_response()
     }
 }
