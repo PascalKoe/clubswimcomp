@@ -13,7 +13,7 @@ use crate::{
     model,
     services::{
         AvailableCompetitionsForRegistrationError, ParticipantDetailsError,
-        RegisterForCompetitionsError, RegistrationCardsError, RemoveParticipantError,
+        ParticipantRegistrationCardsError, RegisterForCompetitionsError, RemoveParticipantError,
         UnregisterFromCompetitionError,
     },
 };
@@ -95,12 +95,14 @@ impl From<&UnregisterFromCompetitionError> for StatusCode {
     }
 }
 
-impl From<&RegistrationCardsError> for StatusCode {
-    fn from(err: &RegistrationCardsError) -> Self {
+impl From<&ParticipantRegistrationCardsError> for StatusCode {
+    fn from(err: &ParticipantRegistrationCardsError) -> Self {
         match err {
-            RegistrationCardsError::ParticipantDoesNotExist => Self::NOT_FOUND,
-            RegistrationCardsError::PdfGenerationFailed(_) => Self::INTERNAL_SERVER_ERROR,
-            RegistrationCardsError::RepositoryError(_) => Self::INTERNAL_SERVER_ERROR,
+            ParticipantRegistrationCardsError::ParticipantDoesNotExist => Self::NOT_FOUND,
+            ParticipantRegistrationCardsError::PdfGenerationFailed(_) => {
+                Self::INTERNAL_SERVER_ERROR
+            }
+            ParticipantRegistrationCardsError::RepositoryError(_) => Self::INTERNAL_SERVER_ERROR,
         }
     }
 }
@@ -227,7 +229,7 @@ async fn registration_cards(
 ) -> Result<(HeaderMap, Vec<u8>), ApiError> {
     let participant_service = state.participant_service();
     let registration_cards = participant_service
-        .registration_cards(participant_id)
+        .registration_cards_for_participant(participant_id)
         .await
         .map_err(ApiError::from)?;
 

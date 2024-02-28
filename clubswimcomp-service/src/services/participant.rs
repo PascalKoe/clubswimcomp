@@ -63,7 +63,7 @@ pub enum RegisterForCompetitionsError {
 }
 
 #[derive(Debug, Error)]
-pub enum RegistrationCardsError {
+pub enum ParticipantRegistrationCardsError {
     #[error("The participant does not exist")]
     ParticipantDoesNotExist,
 
@@ -378,17 +378,17 @@ impl ParticipantService {
         Ok(())
     }
 
-    pub async fn registration_cards(
+    pub async fn registration_cards_for_participant(
         &self,
         participant_id: Uuid,
-    ) -> Result<Vec<u8>, RegistrationCardsError> {
+    ) -> Result<Vec<u8>, ParticipantRegistrationCardsError> {
         tracing::debug!("Ensuring participant actually exists");
         let participant = self
             .participant_repo
             .participant_by_id(participant_id)
             .await
             .context("Failed to fetch participant from repository")?
-            .ok_or(RegistrationCardsError::ParticipantDoesNotExist)?;
+            .ok_or(ParticipantRegistrationCardsError::ParticipantDoesNotExist)?;
 
         tracing::debug!("Loading all registrations for participant");
         let db_registrations = self
@@ -433,6 +433,6 @@ impl ParticipantService {
         .generate_pdf()
         .await
         .context("Failed to generate registration cards for participant")
-        .map_err(RegistrationCardsError::PdfGenerationFailed)
+        .map_err(ParticipantRegistrationCardsError::PdfGenerationFailed)
     }
 }
