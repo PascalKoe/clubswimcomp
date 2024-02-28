@@ -5,6 +5,7 @@ use tower_http::trace::TraceLayer;
 
 mod api;
 mod db;
+mod infra;
 mod model;
 mod services;
 
