@@ -4,7 +4,7 @@ use thiserror::Error;
 use tracing::instrument;
 use uuid::Uuid;
 
-use crate::{db, model};
+use crate::{db, infra, model};
 
 use super::ServiceRepositoryError;
 
@@ -57,6 +57,18 @@ pub enum RegisterForCompetitionsError {
 
     #[error("Participant is not eligible to register for the competition")]
     NotEligible,
+
+    #[error("The repository ran into an error: {0:#?}")]
+    RepositoryError(#[from] anyhow::Error),
+}
+
+#[derive(Debug, Error)]
+pub enum RegistrationCardsError {
+    #[error("The participant does not exist")]
+    ParticipantDoesNotExist,
+
+    #[error("Failed to generate the start card PDF")]
+    PdfGenerationFailed(anyhow::Error),
 
     #[error("The repository ran into an error: {0:#?}")]
     RepositoryError(#[from] anyhow::Error),
@@ -364,5 +376,63 @@ impl ParticipantService {
             .ok_or(UnregisterFromCompetitionError::RegistrationDoesNotExist)?;
 
         Ok(())
+    }
+
+    pub async fn registration_cards(
+        &self,
+        participant_id: Uuid,
+    ) -> Result<Vec<u8>, RegistrationCardsError> {
+        tracing::debug!("Ensuring participant actually exists");
+        let participant = self
+            .participant_repo
+            .participant_by_id(participant_id)
+            .await
+            .context("Failed to fetch participant from repository")?
+            .ok_or(RegistrationCardsError::ParticipantDoesNotExist)?;
+
+        tracing::debug!("Loading all registrations for participant");
+        let db_registrations = self
+            .registration_repo
+            .registrations_of_participant(participant_id)
+            .await
+            .context("Failed to load registrations for participant from repository")?;
+
+        tracing::debug!("Loading the registration details");
+        let mut registration_cards = Vec::with_capacity(db_registrations.len());
+        for db_registration in db_registrations.into_iter() {
+            tracing::debug!(
+                competition_id = ?db_registration.competition_id,
+                "Loading competition for registration"
+            );
+            let competition = self
+                    .competition_repo
+                    .competition_by_id(db_registration.competition_id)
+                    .await
+                    .context("Failed to load competition for registration from repository")?
+                    .map(model::Competition::from)
+                    .context("Competition is referenced in registration but could not be found in repository")?;
+
+            let registeration_card = infra::registration_card::RegistrationCard {
+                first_name: participant.first_name.clone(),
+                last_name: participant.last_name.clone(),
+                distance: competition.distance,
+                stroke: competition.stroke.into(),
+                gender: competition.gender.into(),
+                participant_number: participant.short_id as _,
+            };
+
+            registration_cards.push(registeration_card);
+        }
+
+        tracing::debug!("Generating PDF registration cards for particpant");
+        infra::registration_card::RegistrationCards {
+            event_name: "TEST EVENT NAME".to_string(),
+            organization: "TEST ORGANIZATION".to_string(),
+            cards: registration_cards,
+        }
+        .generate_pdf()
+        .await
+        .context("Failed to generate registration cards for participant")
+        .map_err(RegistrationCardsError::PdfGenerationFailed)
     }
 }

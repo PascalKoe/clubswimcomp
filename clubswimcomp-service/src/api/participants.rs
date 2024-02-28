@@ -1,6 +1,6 @@
 use axum::{
     extract::{Path, Query, State},
-    http::StatusCode,
+    http::{header, HeaderMap, StatusCode},
     routing::*,
     Json,
 };
@@ -13,7 +13,8 @@ use crate::{
     model,
     services::{
         AvailableCompetitionsForRegistrationError, ParticipantDetailsError,
-        RegisterForCompetitionsError, RemoveParticipantError, UnregisterFromCompetitionError,
+        RegisterForCompetitionsError, RegistrationCardsError, RemoveParticipantError,
+        UnregisterFromCompetitionError,
     },
 };
 
@@ -36,6 +37,10 @@ pub fn router() -> Router<AppState> {
         .route(
             "/:participant_id/registrations/:registration_id",
             delete(unregister_from_competition),
+        )
+        .route(
+            "/:participant_id/registrations/cards",
+            get(registration_cards),
         )
 }
 
@@ -86,6 +91,16 @@ impl From<&UnregisterFromCompetitionError> for StatusCode {
         match err {
             UnregisterFromCompetitionError::RegistrationDoesNotExist => Self::NOT_FOUND,
             UnregisterFromCompetitionError::RepositoryError(_) => Self::INTERNAL_SERVER_ERROR,
+        }
+    }
+}
+
+impl From<&RegistrationCardsError> for StatusCode {
+    fn from(err: &RegistrationCardsError) -> Self {
+        match err {
+            RegistrationCardsError::ParticipantDoesNotExist => Self::NOT_FOUND,
+            RegistrationCardsError::PdfGenerationFailed(_) => Self::INTERNAL_SERVER_ERROR,
+            RegistrationCardsError::RepositoryError(_) => Self::INTERNAL_SERVER_ERROR,
         }
     }
 }
@@ -203,4 +218,29 @@ async fn unregister_from_competition(
         .unregister_from_competition(registration_id)
         .await
         .map_err(ApiError::from)
+}
+
+#[instrument(skip(state))]
+async fn registration_cards(
+    Path(participant_id): Path<Uuid>,
+    State(state): State<AppState>,
+) -> Result<(HeaderMap, Vec<u8>), ApiError> {
+    let participant_service = state.participant_service();
+    let registration_cards = participant_service
+        .registration_cards(participant_id)
+        .await
+        .map_err(ApiError::from)?;
+
+    let file_name = format!("{participant_id}-cards.pdf");
+
+    let mut headers = HeaderMap::new();
+    headers.append(header::CONTENT_TYPE, "application/pdf".parse().unwrap());
+    headers.append(
+        header::CONTENT_DISPOSITION,
+        format!("attachment; filename=\"{file_name}\"")
+            .parse()
+            .unwrap(),
+    );
+
+    Ok((headers, registration_cards))
 }
