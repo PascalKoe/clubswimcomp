@@ -18,7 +18,7 @@ pub struct RegistrationCard {
     pub distance: u32,
     pub stroke: Stroke,
     pub gender: Gender,
-    pub participant_number: u32,
+    pub participant_number: String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

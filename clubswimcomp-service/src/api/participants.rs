@@ -227,9 +227,9 @@ async fn registration_cards(
     Path(participant_id): Path<Uuid>,
     State(state): State<AppState>,
 ) -> Result<(HeaderMap, Vec<u8>), ApiError> {
-    let participant_service = state.participant_service();
-    let registration_cards = participant_service
-        .registration_cards_for_participant(participant_id)
+    let registration_card_service = state.registration_card_service();
+    let registration_cards = registration_card_service
+        .participants_registration_cards(participant_id)
         .await
         .map_err(ApiError::from)?;
 
