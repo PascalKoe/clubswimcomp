@@ -4,7 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+clubswimcomp-types = { path = "../clubswimcomp-types" }
+
 console_error_panic_hook = "0.1.7"
+gloo-net = "0.5.0"
 leptos = { version = "0.6.6", features = ["csr", "nightly"] }
 leptos_router = { version = "0.6.6", features = ["csr", "nightly"] }
 phosphor-leptos = "0.3.1"
+uuid = { version = "1.7.0", features = ["serde"] }

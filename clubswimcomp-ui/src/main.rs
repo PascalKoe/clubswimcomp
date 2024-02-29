@@ -1,7 +1,9 @@
 use leptos::*;
 use leptos_router::*;
 
+mod api_client;
 mod competitions;
+mod conversions;
 mod layout;
 
 use layout::*;
@@ -24,6 +26,7 @@ fn ClubSwimCompUi() -> impl IntoView {
                     <Route path="/" view=Home/>
                     <Route path="/competitions" view=competitions::CompetitionOverview/>
                     <Route path="/competitions/add" view=competitions::AddCompetition/>
+                    <Route path="/competitions/:competition_id" view=competitions::CompetitionDetails/>
                 </Routes>
             </AppShell>
         </Router>
