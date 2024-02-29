@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+table.table tr {
+    >td:first-child {
+        padding-left: 0px;
+    }
+
+    >th:first-child {
+        padding-left: 0px;
+    }
+
+    >td:last-child {
+        padding-right: 0px;
+    }
+
+    >th:last-child {
+        padding-right: 0px;
+    }
+}
