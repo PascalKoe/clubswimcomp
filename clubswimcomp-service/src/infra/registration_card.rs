@@ -1,7 +1,8 @@
 use anyhow::Context;
+use clubswimcomp_types::model;
 use serde::{Deserialize, Serialize};
 
-use crate::{infra, model};
+use crate::infra;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RegistrationCards {

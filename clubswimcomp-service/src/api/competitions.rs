@@ -1,14 +1,12 @@
 use axum::{extract::*, http::StatusCode, routing::*};
+use clubswimcomp_types::model;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;
 
-use crate::{
-    model,
-    services::{
-        AddCompetitionError, CompetitionDetailsError, CompetitionScoreboardError,
-        DeleteCompetitionError,
-    },
+use crate::services::{
+    AddCompetitionError, CompetitionDetailsError, CompetitionScoreboardError,
+    DeleteCompetitionError,
 };
 
 use super::{ApiError, AppState};

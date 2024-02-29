@@ -1,9 +1,10 @@
 use anyhow::{Context, Result};
+use clubswimcomp_types::model;
 use thiserror::Error;
 use tracing::instrument;
 use uuid::Uuid;
 
-use crate::{db, infra, model};
+use crate::{db, infra};
 
 pub struct RegistrationCardService {
     participant_repo: db::participants::Repository,

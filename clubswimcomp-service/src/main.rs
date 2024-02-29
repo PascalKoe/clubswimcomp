@@ -4,9 +4,9 @@ use axum::Router;
 use tower_http::trace::TraceLayer;
 
 mod api;
+mod conversions;
 mod db;
 mod infra;
-mod model;
 mod services;
 
 #[tokio::main]

@@ -1,10 +1,11 @@
 use anyhow::{Context, Result};
 use chrono::NaiveDate;
+use clubswimcomp_types::model;
 use thiserror::Error;
 use tracing::instrument;
 use uuid::Uuid;
 
-use crate::{db, model};
+use crate::db;
 
 use super::ServiceRepositoryError;
 

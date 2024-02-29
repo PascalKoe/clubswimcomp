@@ -1,8 +1,3 @@
 [workspace]
 resolver = "2"
-members = [
-    "clubswimcomp-service",
-    "clubswimcomp-ui"
-]
-
-
+members = ["clubswimcomp-service", "clubswimcomp-types", "clubswimcomp-ui"]

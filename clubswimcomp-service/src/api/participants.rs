@@ -5,17 +5,15 @@ use axum::{
     Json,
 };
 use chrono::NaiveDate;
+use clubswimcomp_types::model;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;
 
-use crate::{
-    model,
-    services::{
-        AvailableCompetitionsForRegistrationError, ParticipantDetailsError,
-        ParticipantRegistrationCardsError, RegisterForCompetitionsError, RemoveParticipantError,
-        UnregisterFromCompetitionError,
-    },
+use crate::services::{
+    AvailableCompetitionsForRegistrationError, ParticipantDetailsError,
+    ParticipantRegistrationCardsError, RegisterForCompetitionsError, RemoveParticipantError,
+    UnregisterFromCompetitionError,
 };
 
 use super::{ApiError, AppState};
