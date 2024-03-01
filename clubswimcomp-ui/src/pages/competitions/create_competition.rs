@@ -1,14 +1,10 @@
-use leptos::*;
-use phosphor_leptos::Plus;
-
-use crate::Page;
-
 pub fn AddCompetition() -> impl IntoView {
     view! {
-        <Page title="Add new Competition".to_string()>
-            <div class="mt-2 mb-8 text-sm font-light text-gray-800 max-w-2xl">
-                <p>Add a new competition to the event. Only participants with the same gender can participate in the competition. There must not be any competition with exactly the same parameters.</p>
-            </div>
+        <Page>
+            <PageTitle
+                title="Add new Competition".to_string()
+                subtitle="Add a new competition to the event. Only participants with the same gender can participate in the competition. There must not be any competition with exactly the same parameters.".to_string().into()
+                />
 
             <label class="form-control w-full max-w-2xl">
                 <div class="label">
@@ -48,9 +44,9 @@ pub fn AddCompetition() -> impl IntoView {
                 </button>
             </div>
             <div class="form-control w-full max-w-2xl mt-4">
-                <a href="/competitions" class="btn btn-sm btn-neutral">
+                <A href="/competitions" class="btn btn-sm btn-neutral">
                     Cancel
-                </a>
+                </A>
             </div>
         </Page>
     }

@@ -1,4 +1,5 @@
 use leptos::*;
+use leptos_router::*;
 
 #[component]
 pub fn drawer() -> impl IntoView {
@@ -8,10 +9,10 @@ pub fn drawer() -> impl IntoView {
             <ul class="menu p-0 pt-6 w-80 min-h-full bg-base-200">
                 <li class="menu-title pt-0 text-2xl text-black">ClubSwimComp</li>
                 <li>
-                    <a href="/">Home</a>
+                    <A active_class="active" href="/">Home</A>
                 </li>
                 <li>
-                    <a href="/competitions">Competitions</a>
+                    <A active_class="active" href="/competitions">Competitions</A>
                 </li>
             </ul>
         </div>

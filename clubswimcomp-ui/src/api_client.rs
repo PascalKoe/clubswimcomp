@@ -1,5 +1,7 @@
+#![allow(dead_code)]
+
 use clubswimcomp_types::model;
-use gloo_net::http::{Request, RequestBuilder};
+use gloo_net::http::Request;
 use uuid::Uuid;
 
 const BASE_URL: &str = "http://localhost:3000";
