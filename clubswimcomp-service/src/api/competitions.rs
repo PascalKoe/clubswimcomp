@@ -1,6 +1,5 @@
 use axum::{extract::*, http::StatusCode, routing::*};
-use clubswimcomp_types::model;
-use serde::{Deserialize, Serialize};
+use clubswimcomp_types::{api, model};
 use tracing::instrument;
 use uuid::Uuid;
 
@@ -67,29 +66,17 @@ async fn list_competitions(
     Ok(Json(competitions))
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
-pub struct AddCompetitionRequest {
-    pub gender: model::Gender,
-    pub stroke: model::Stroke,
-    pub distance: u32,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
-pub struct AddCompetitionResponse {
-    competition_id: Uuid,
-}
-
 #[instrument(skip(state))]
 async fn add_competition(
     State(state): State<AppState>,
-    Json(b): Json<AddCompetitionRequest>,
-) -> Result<Json<AddCompetitionResponse>, ApiError> {
+    Json(b): Json<api::AddCompetitionRequest>,
+) -> Result<Json<api::AddCompetitionResponse>, ApiError> {
     let competition_service = state.competition_service();
     let competition_id = competition_service
         .add_competition(b.distance, b.gender, b.stroke)
         .await?;
 
-    Ok(Json(AddCompetitionResponse { competition_id }))
+    Ok(Json(api::AddCompetitionResponse { competition_id }))
 }
 
 #[instrument(skip(state))]
@@ -105,16 +92,11 @@ async fn competition_details(
     Ok(Json(competition_details))
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
-pub struct DeleteCompetitionParams {
-    force_delete: Option<bool>,
-}
-
 #[instrument(skip(state))]
 async fn delete_competition(
     State(state): State<AppState>,
     Path(competition_id): Path<Uuid>,
-    Query(params): Query<DeleteCompetitionParams>,
+    Query(params): Query<api::DeleteCompetitionParams>,
 ) -> Result<(), ApiError> {
     let competition_service = state.competition_service();
     competition_service

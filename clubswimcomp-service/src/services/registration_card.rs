@@ -58,6 +58,7 @@ impl RegistrationCardService {
         }
     }
 
+    #[instrument(skip(self))]
     async fn generate_pdf_for_cards(
         &self,
         cards: Vec<infra::registration_card::RegistrationCard>,
@@ -72,6 +73,7 @@ impl RegistrationCardService {
         .context("Failed to generate PDF for registration cards")
     }
 
+    #[instrument(skip(self))]
     async fn load_for_registration(
         &self,
         registration_id: Uuid,
@@ -118,6 +120,7 @@ impl RegistrationCardService {
         }))
     }
 
+    #[instrument(skip(self))]
     async fn load_for_participant(
         &self,
         participant: model::Participant,
@@ -159,6 +162,7 @@ impl RegistrationCardService {
         Ok(registration_cards)
     }
 
+    #[instrument(skip(self))]
     pub async fn all_registration_cards(&self) -> Result<Vec<u8>, EventRegistrationCardsError> {
         tracing::debug!("Fetching participants from repository");
         let mut participants = self
@@ -190,6 +194,7 @@ impl RegistrationCardService {
             .map_err(EventRegistrationCardsError::PdfGenerationFailed)
     }
 
+    #[instrument(skip(self))]
     pub async fn participants_registration_cards(
         &self,
         participant_id: Uuid,
@@ -204,7 +209,7 @@ impl RegistrationCardService {
             .ok_or(ParticipantRegistrationCardsError::ParticipantDoesNotExist)?;
 
         tracing::debug!("Loading participants registration card information");
-        let mut participant_cards = self
+        let participant_cards = self
             .load_for_participant(participant)
             .await
             .context("Failed to load participant registration card information")?;
@@ -216,6 +221,7 @@ impl RegistrationCardService {
             .map_err(ParticipantRegistrationCardsError::PdfGenerationFailed)
     }
 
+    #[instrument(skip(self))]
     pub async fn registration_card(
         &self,
         registration_id: Uuid,

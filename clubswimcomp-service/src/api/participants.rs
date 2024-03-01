@@ -4,9 +4,7 @@ use axum::{
     routing::*,
     Json,
 };
-use chrono::NaiveDate;
-use clubswimcomp_types::model;
-use serde::{Deserialize, Serialize};
+use clubswimcomp_types::{api, model};
 use tracing::instrument;
 use uuid::Uuid;
 
@@ -127,41 +125,23 @@ async fn participant_details(
     Ok(Json(participant_details))
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
-struct AddParticipantBody {
-    first_name: String,
-    last_name: String,
-    gender: model::Gender,
-    birthday: NaiveDate,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
-struct AddParticipantResponse {
-    participant_id: Uuid,
-}
-
 #[instrument(skip(state))]
 async fn add_participant(
     State(state): State<AppState>,
-    Json(p): Json<AddParticipantBody>,
-) -> Result<Json<AddParticipantResponse>, ApiError> {
+    Json(p): Json<api::AddParticipantBody>,
+) -> Result<Json<api::AddParticipantResponse>, ApiError> {
     let participant_service = state.participant_service();
     let participant_id = participant_service
         .add_participant(&p.first_name, &p.last_name, p.gender, p.birthday)
         .await?;
 
-    Ok(Json(AddParticipantResponse { participant_id }))
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize)]
-struct RemoveParticipantParameters {
-    force_delete: Option<bool>,
+    Ok(Json(api::AddParticipantResponse { participant_id }))
 }
 
 #[instrument(skip(state))]
 async fn remove_participant(
     Path(participant_id): Path<Uuid>,
-    Query(p): Query<RemoveParticipantParameters>,
+    Query(p): Query<api::RemoveParticipantParameters>,
     State(state): State<AppState>,
 ) -> Result<(), ApiError> {
     let participant_service = state.participant_service();
@@ -184,28 +164,20 @@ async fn available_competitions_for_registration(
     Ok(Json(competitions))
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
-struct RegisterForCompetitionBody {
-    competition_id: Uuid,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
-struct RegisterForCompetitionResponse {
-    registration_id: Uuid,
-}
-
 #[instrument(skip(state))]
 async fn register_for_competition(
     Path(participant_id): Path<Uuid>,
     State(state): State<AppState>,
-    Json(b): Json<RegisterForCompetitionBody>,
-) -> Result<Json<RegisterForCompetitionResponse>, ApiError> {
+    Json(b): Json<api::RegisterForCompetitionBody>,
+) -> Result<Json<api::RegisterForCompetitionResponse>, ApiError> {
     let participant_service = state.participant_service();
     let registration_id = participant_service
         .register_for_competition(participant_id, b.competition_id)
         .await?;
 
-    Ok(Json(RegisterForCompetitionResponse { registration_id }))
+    Ok(Json(api::RegisterForCompetitionResponse {
+        registration_id,
+    }))
 }
 
 #[instrument(skip(state))]

@@ -4,7 +4,7 @@ use axum::{
     routing::*,
     Json,
 };
-use serde::{Deserialize, Serialize};
+use clubswimcomp_types::api;
 use tracing::instrument;
 use uuid::Uuid;
 
@@ -38,17 +38,10 @@ impl From<&RemoveRegistrationResultError> for StatusCode {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
-struct EnterResultBody {
-    pub registration_id: Uuid,
-    pub disqualified: bool,
-    pub time_millis: u32,
-}
-
 #[instrument(skip(state))]
 async fn add_registration_result(
     State(state): State<AppState>,
-    Json(b): Json<EnterResultBody>,
+    Json(b): Json<api::EnterResultBody>,
 ) -> Result<(), ApiError> {
     let result_service = state.registration_service();
     result_service
