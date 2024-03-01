@@ -7,7 +7,7 @@ use crate::components::*;
 
 #[component]
 pub fn ParticipantDetails() -> impl IntoView {
-    let refresh_trigger = create_trigger();
+    let navigate = use_navigate();
 
     let params = use_params_map();
     let participant_id = move || {
@@ -33,24 +33,54 @@ pub fn ParticipantDetails() -> impl IntoView {
         available_competitions.refetch();
     };
 
+    let delete_participant_action = create_action(|participant_id: &Uuid| {
+        let participant_id = *participant_id;
+        async move {
+            api_client::remove_participant(participant_id, false)
+                .await
+                .unwrap();
+        }
+    });
+
+    let redirect_on_deletion = move || {
+        if delete_participant_action.value().get().is_some() {
+            navigate("/participants", Default::default());
+        }
+    };
+
+    let can_be_deleted = move || {
+        participant_details
+            .get()
+            .is_some_and(|pd| pd.registrations.is_empty())
+    };
+
     view! {
         <PageLayout>
+            {redirect_on_deletion}
             <PageTitle
                 title="Participant Details"
                 subtitle="Details about a specific participant all of hist registrations.".to_string().into()
             />
-            <Suspense fallback=|| view!{<span class="loading loading-spinner loading-lg"></span>}>
+            <Transition fallback=|| view!{<span class="loading loading-spinner loading-lg"></span>}>
                 {
                     // FIXME: Participant Start Card Link
-
                     move || participant_details.get().map(|pd| {
                         let start_card_link = format!("http://localhost:3000/participants/{}/registrations/cards", pd.participant.id);
                         view! {
                             <div class="mb-8">
-                                <A target="about:blank" href=start_card_link class="btn btn-sm btn-primary rounded-full">
+                                <A target="about:blank" href=start_card_link class="btn btn-sm btn-primary rounded-full mr-4">
                                     <phosphor_leptos::Printer />
                                     Print Registration Cards
                                 </A>
+                                <button
+                                    target="about:blank"
+                                    class="btn btn-sm btn-error rounded-full"
+                                    on:click=move |_| delete_participant_action.dispatch(participant_id())
+                                    disabled=move || !can_be_deleted()
+                                >
+                                    <phosphor_leptos::Trash />
+                                    Delete Participant
+                                </button>
                             </div>
 
                             <ParticipantInfoTable participant=pd.participant.clone() />
@@ -77,7 +107,7 @@ pub fn ParticipantDetails() -> impl IntoView {
                         }
                     })
                 }
-            </Suspense>
+            </Transition>
         </PageLayout>
     }
 }
