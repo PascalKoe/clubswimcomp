@@ -1,7 +1,7 @@
 use anyhow::Context;
 use api::AppState;
 use axum::Router;
-use tower_http::trace::TraceLayer;
+use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
 mod api;
 mod conversions;
@@ -23,6 +23,7 @@ async fn main() -> anyhow::Result<()> {
 
     let app = Router::new()
         .nest("/", api::routes())
+        .layer(CorsLayer::permissive())
         .layer(TraceLayer::new_for_http())
         .with_state(app_state);
 
