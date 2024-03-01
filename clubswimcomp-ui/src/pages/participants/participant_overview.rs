@@ -21,7 +21,7 @@ pub fn ParticipantOverview() -> impl IntoView {
                     move || participants.get().map(|p|
                         view! {
                             <div class="mb-8">
-                                <A href="/competitions/add" class="btn btn-sm btn-primary rounded-full">
+                                <A href="/participants/add" class="btn btn-sm btn-primary rounded-full">
                                     <phosphor_leptos::Plus />
                                     Add Participant
                                 </A>
