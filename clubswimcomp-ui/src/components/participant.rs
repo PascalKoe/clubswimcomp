@@ -1,4 +1,3 @@
-use clubswimcomp_types::model;
 use leptos::*;
 use leptos_router::*;
 use uuid::Uuid;
@@ -106,7 +105,7 @@ pub fn ParticipantRegistrationsTable(
         }
     });
 
-    let on_unregistered_effect = create_memo(move |a| {
+    let on_unregistered_effect = create_memo(move |_| {
         if !unregister_action.pending().get() && unregister_action.value().get().is_some() {
             if let Some(on_unregister) = on_unregister {
                 on_unregister(());
@@ -202,7 +201,7 @@ pub fn ParticipantAvailableCompetitionsTable(
         }
     });
 
-    let on_registered_effect = create_memo(move |a| {
+    let on_registered_effect = create_memo(move |_| {
         if !register_for_competition.pending().get()
             && register_for_competition.value().get().is_some()
         {
