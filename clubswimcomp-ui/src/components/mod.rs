@@ -3,9 +3,11 @@ use leptos::*;
 
 mod competition;
 mod page;
+mod participant;
 
 pub use competition::*;
 pub use page::*;
+pub use participant::*;
 
 #[component]
 pub fn GenderDisplay(gender: model::Gender, #[prop(optional)] short: bool) -> impl IntoView {

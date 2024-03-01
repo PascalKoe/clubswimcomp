@@ -26,6 +26,8 @@ fn ClubSwimCompUi() -> impl IntoView {
                     <Route path="/" view=Home/>
                     <Route path="/competitions" view=pages::CompetitionOverview/>
                     <Route path="/competitions/:competition_id" view=pages::CompetitionDetails/>
+                    
+                    <Route path="/participants" view=pages::ParticipantOverview/>
                 </Routes>
             </AppShell>
         </Router>

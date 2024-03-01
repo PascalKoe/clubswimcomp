@@ -37,9 +37,16 @@ pub fn CompetitionRegistrationsTable(
             .into_iter()
             .map(|r| {
                 let details_link = format!("/registrations/{}", r.id);
+                let participant_link = format!("/participants/{}", r.participant.id);
+                
                 view! {
                     <tr>
-                        <td>{r.participant.short_code}</td>
+                        <td>
+                            <A class="btn btn-ghost btn-xs pl-0" href=participant_link>
+                                {r.participant.short_code}
+                                <phosphor_leptos::Link />
+                            </A>
+                        </td>
                         <td>{r.participant.last_name}</td>
                         <td>{r.participant.first_name}</td>
                         <td><GenderDisplay gender=r.participant.gender /></td>
