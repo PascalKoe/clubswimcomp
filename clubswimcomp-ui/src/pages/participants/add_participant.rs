@@ -6,18 +6,6 @@ use leptos_router::*;
 use crate::{api_client, components::*};
 
 #[component]
-pub fn FormItem(#[prop(into)] label: String, children: Children) -> impl IntoView {
-    view! {
-        <label class="form-control w-full max-w-2xl">
-            <div class="label">
-                <span class="label-text">{label}</span>
-            </div>
-            {children()}
-        </label>
-    }
-}
-
-#[component]
 pub fn AddParticipant() -> impl IntoView {
     let navigate = leptos_router::use_navigate();
 

@@ -49,3 +49,15 @@ pub fn TimeDisplay(#[prop(into)] millis: MaybeSignal<i64>) -> impl IntoView {
 
     move || format!("{:02}:{:02},{:02}", minutes(), seconds(), hundreths())
 }
+
+#[component]
+pub fn FormItem(#[prop(into)] label: String, children: Children) -> impl IntoView {
+    view! {
+        <label class="form-control w-full max-w-2xl">
+            <div class="label">
+                <span class="label-text">{label}</span>
+            </div>
+            {children()}
+        </label>
+    }
+}
