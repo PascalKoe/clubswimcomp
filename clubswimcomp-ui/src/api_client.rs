@@ -47,6 +47,20 @@ pub async fn participants_details(participant_id: Uuid) -> Result<model::Partici
     Ok(response.json().await.unwrap())
 }
 
+pub async fn participant_available_competitions(participant_id: Uuid) -> Result<Vec<model::Competition>> {
+    let response = Request::get(&format!("{BASE_URL}/participants/{participant_id}/registrations/available-competitions"))
+        .send()
+        .await
+        .unwrap();
+
+    if !response.ok() {
+        return Err(response.text().await.unwrap());
+    }
+
+    Ok(response.json().await.unwrap())
+}
+
+
 pub async fn competition_overview() -> Result<Vec<model::Competition>> {
     let response = Request::get(&format!("{BASE_URL}/competitions"))
         .send()

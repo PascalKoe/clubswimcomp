@@ -2,7 +2,7 @@ use clubswimcomp_types::model;
 use leptos::*;
 use leptos_router::*;
 
-use super::{DistanceDisplay, GenderDisplay, StrokeDisplay};
+use super::{BirthdayDisplay, DistanceDisplay, GenderDisplay, StrokeDisplay};
 
 #[component]
 pub fn CompetitionInfoTable(
@@ -38,19 +38,19 @@ pub fn CompetitionRegistrationsTable(
             .map(|r| {
                 let details_link = format!("/registrations/{}", r.id);
                 let participant_link = format!("/participants/{}", r.participant.id);
-                
+
                 view! {
                     <tr>
-                        <td>
-                            <A class="btn btn-ghost btn-xs pl-0" href=participant_link>
-                                {r.participant.short_code}
-                                <phosphor_leptos::Link />
+                        <td class="w-0">
+                            <A class="btn btn-xs" href=participant_link>
+                                <phosphor_leptos::MagnifyingGlass />
                             </A>
                         </td>
+                        <td>{r.participant.short_code}</td>
                         <td>{r.participant.last_name}</td>
                         <td>{r.participant.first_name}</td>
                         <td><GenderDisplay gender=r.participant.gender /></td>
-                        <td>{r.participant.birthday.format("%Y-%m-%d").to_string()}</td>
+                        <td><BirthdayDisplay birthday=r.participant.birthday /></td>
                         <td>
                             {
                                 if r.result.is_some() {
@@ -79,6 +79,7 @@ pub fn CompetitionRegistrationsTable(
             <table class="table table-xs">
                 <thead>
                     <tr>
+                        <th></th>
                         <th>Code</th>
                         <th>Last Name</th>
                         <th>First Name</th>

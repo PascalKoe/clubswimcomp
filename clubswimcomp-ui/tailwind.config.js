@@ -7,7 +7,9 @@ module.exports = {
       {
         corporate: {
           ...require("daisyui/src/theming/themes")["corporate"],
-          "primary-content": "FFFFFF"
+          "primary-content": "FFFFFF",
+          "secondary-content": "FFFFFF",
+          "error-content": "FFFFFF",
         }
       }
     ],

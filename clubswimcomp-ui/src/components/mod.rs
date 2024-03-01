@@ -35,3 +35,17 @@ pub fn StrokeDisplay(#[prop(into)] stroke: MaybeSignal<model::Stroke>) -> impl I
         model::Stroke::Freestyle => "Freestyle",
     }
 }
+
+#[component]
+pub fn BirthdayDisplay(#[prop(into)] birthday: MaybeSignal<chrono::NaiveDate>) -> impl IntoView {
+    move || birthday().format("%Y-%m-%d").to_string()
+}
+
+#[component]
+pub fn TimeDisplay(#[prop(into)] millis: MaybeSignal<i64>) -> impl IntoView {
+    let minutes = move || millis() / (60 * 1000);
+    let seconds = move || (millis() / 1000) % 60;
+    let hundreths = move || (millis() / 10) % 100;
+
+    move || format!("{:02}:{:02},{:02}", minutes(), seconds(), hundreths())
+}
