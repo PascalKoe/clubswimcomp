@@ -7,6 +7,8 @@ use crate::components::*;
 
 #[component]
 pub fn ParticipantDetails() -> impl IntoView {
+    let refresh_trigger = create_trigger();
+
     let params = use_params_map();
     let participant_id = move || {
         params()
@@ -25,6 +27,11 @@ pub fn ParticipantDetails() -> impl IntoView {
             .await
             .unwrap()
     });
+
+    let refetch_data = move |_| {
+        participant_details.refetch();
+        available_competitions.refetch();
+    };
 
     view! {
         <PageLayout>
@@ -46,19 +53,27 @@ pub fn ParticipantDetails() -> impl IntoView {
                                 </A>
                             </div>
 
-                            <ParticipantInfoTable participant=pd.participant />
+                            <ParticipantInfoTable participant=pd.participant.clone() />
 
                             <SectionTitle
                                 title="Registrations".to_string()
                                 subtitle="This is an overview over all of the registrations that exist for this participant.".to_string().into()
                             />
-                            <ParticipantRegistrationsTable registraions=pd.registrations/>
+                            <ParticipantRegistrationsTable
+                                participant_id=pd.participant.id
+                                registrations=pd.registrations
+                                on_unregister=refetch_data
+                            />
 
                             <SectionTitle
                                 title="Available Competitions".to_string()
                                 subtitle="This is an list of competitions that can be joined by the participant.".to_string().into()
                             />
-                            <ParticipantAvailableCompetitionsTable competitions=available_competitions.get().unwrap_or_default() />
+                            <ParticipantAvailableCompetitionsTable
+                                on_registered=refetch_data
+                                participant_id=pd.participant.id
+                                competitions=available_competitions.get().unwrap_or_default()
+                            />
                         }
                     })
                 }

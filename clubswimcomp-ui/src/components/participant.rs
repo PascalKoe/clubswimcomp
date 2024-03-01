@@ -1,8 +1,9 @@
 use clubswimcomp_types::model;
 use leptos::*;
 use leptos_router::*;
+use uuid::Uuid;
 
-use crate::components::*;
+use crate::{api_client, components::*};
 
 #[component]
 pub fn ParticipantInfoTable(
@@ -91,10 +92,30 @@ pub fn ParticipantOverviewTable(
 
 #[component]
 pub fn ParticipantRegistrationsTable(
-    #[prop(into)] registraions: MaybeSignal<Vec<model::ParticipantRegistration>>,
+    #[prop(into)] registrations: MaybeSignal<Vec<model::ParticipantRegistration>>,
+    #[prop(into)] participant_id: MaybeSignal<Uuid>,
+    #[prop(into, optional)] on_unregister: Option<Callback<()>>,
 ) -> impl IntoView {
+    let unregister_action = create_action(|input: &(Uuid, Uuid)| {
+        let participant_id = input.0;
+        let registration_id = input.1;
+        async move {
+            api_client::unregister_from_competition(participant_id, registration_id)
+                .await
+                .unwrap();
+        }
+    });
+
+    let on_unregistered_effect = create_memo(move |a| {
+        if !unregister_action.pending().get() && unregister_action.value().get().is_some() {
+            if let Some(on_unregister) = on_unregister {
+                on_unregister(());
+            }
+        }
+    });
+
     let rows = move || {
-        registraions()
+        registrations()
             .into_iter()
             .map(|r| {
                 let competition_link = format!("/competitions/{}", r.competition.id);
@@ -127,7 +148,9 @@ pub fn ParticipantRegistrationsTable(
                             }
                         </td>
                         <td class="w-0">
-                            <A class="btn btn-xs btn-error" href="">Unregister</A>
+                            <button class="btn btn-xs btn-error" on:click=move |_| unregister_action.dispatch((participant_id(), r.id))>
+                                Unregister
+                            </button>
                         </td>
                         <td class="w-0">
                             <A class="btn btn-xs btn-secondary" href="">Result</A>
@@ -139,6 +162,7 @@ pub fn ParticipantRegistrationsTable(
     };
 
     view! {
+        {on_unregistered_effect}
         <div class="overflow-x-auto">
             <table class="table table-xs">
                 <thead>
@@ -163,8 +187,31 @@ pub fn ParticipantRegistrationsTable(
 
 #[component]
 pub fn ParticipantAvailableCompetitionsTable(
+    #[prop(optional, into)] on_registered: Option<Callback<()>>,
+    #[prop(into)] participant_id: MaybeSignal<Uuid>,
     #[prop(into)] competitions: MaybeSignal<Vec<model::Competition>>,
 ) -> impl IntoView {
+    let register_for_competition = create_action(|input: &(Uuid, Uuid)| {
+        let participant_id = input.0;
+        let competition_id = input.1;
+
+        async move {
+            api_client::register_for_competition(participant_id, competition_id)
+                .await
+                .unwrap();
+        }
+    });
+
+    let on_registered_effect = create_memo(move |a| {
+        if !register_for_competition.pending().get()
+            && register_for_competition.value().get().is_some()
+        {
+            if let Some(on_registered) = on_registered {
+                on_registered(());
+            }
+        }
+    });
+
     let rows = move || {
         competitions()
             .into_iter()
@@ -181,7 +228,9 @@ pub fn ParticipantAvailableCompetitionsTable(
                         <td><GenderDisplay gender=r.gender /></td>
                         <td><StrokeDisplay stroke=r.stroke/></td>
                         <td class="w-0">
-                            <A class="btn btn-xs btn-secondary" href="">Register</A>
+                            <button class="btn btn-xs btn-secondary" on:click=move |_| register_for_competition.dispatch((participant_id(), r.id))>
+                                Register
+                            </button>
                         </td>
                     </tr>
                 }
@@ -190,6 +239,7 @@ pub fn ParticipantAvailableCompetitionsTable(
     };
 
     view! {
+        {on_registered_effect}
         <div class="overflow-x-auto">
             <table class="table table-xs">
                 <thead>

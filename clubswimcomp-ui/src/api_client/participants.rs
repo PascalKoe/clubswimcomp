@@ -106,9 +106,9 @@ pub async fn register_for_competition(participant_id: Uuid, competition_id: Uuid
     Ok(response.registration_id)
 }
 
-pub async fn unregister_from_competition(participant_id: Uuid, competition_id: Uuid) -> Result<()> {
+pub async fn unregister_from_competition(participant_id: Uuid, registration_id: Uuid) -> Result<()> {
     let response = Request::delete(&format!(
-        "{BASE_URL}/participants/{participant_id}/registrations/{competition_id}"
+        "{BASE_URL}/participants/{participant_id}/registrations/{registration_id}"
     ))
     .send()
     .await
