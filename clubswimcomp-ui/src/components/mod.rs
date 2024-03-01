@@ -2,10 +2,12 @@ use clubswimcomp_types::model;
 use leptos::*;
 
 mod competition;
+mod event;
 mod page;
 mod participant;
 
 pub use competition::*;
+pub use event::*;
 pub use page::*;
 pub use participant::*;
 

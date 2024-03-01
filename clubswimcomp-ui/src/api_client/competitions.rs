@@ -52,3 +52,17 @@ pub async fn competition_details(competition_id: Uuid) -> Result<model::Competit
 
     Ok(response.json().await.unwrap())
 }
+
+pub async fn delete_competition(competition_id: Uuid, force_delete: bool) -> Result<()> {
+    let response = Request::delete(&format!("{BASE_URL}/competitions/{}", competition_id))
+        .query([("force_delete", force_delete.to_string())])
+        .send()
+        .await
+        .unwrap();
+
+    if !response.ok() {
+        return Err(response.text().await.unwrap());
+    }
+
+    Ok(())
+}

@@ -12,6 +12,9 @@ pub fn drawer() -> impl IntoView {
                     <A active_class="active" href="/">Home</A>
                 </li>
                 <li>
+                    <A active_class="active" href="/event">Event</A>
+                </li>
+                <li>
                     <A active_class="active" href="/competitions">Competitions</A>
                 </li>
                 <li>

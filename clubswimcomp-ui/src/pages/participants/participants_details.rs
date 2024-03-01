@@ -73,7 +73,6 @@ pub fn ParticipantDetails() -> impl IntoView {
                                     Print Registration Cards
                                 </A>
                                 <button
-                                    target="about:blank"
                                     class="btn btn-sm btn-error rounded-full"
                                     on:click=move |_| delete_participant_action.dispatch(participant_id())
                                     disabled=move || !can_be_deleted()
