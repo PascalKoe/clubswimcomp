@@ -17,7 +17,7 @@ pub fn CompetitionOverview() -> impl IntoView {
                 title="Competition Overview"
                 subtitle="An overview about every single competition that exists for this event.".to_string().into()
             />
-            <Suspense fallback=|| view!{<span class="loading loading-spinner loading-lg"></span>}>
+            <Transition fallback=|| view!{<span class="loading loading-spinner loading-lg"></span>}>
                 {
                     move || competitions.get().map(|c|
                         view! {
@@ -32,7 +32,7 @@ pub fn CompetitionOverview() -> impl IntoView {
                         }
                     )
                 }
-            </Suspense>
+            </Transition>
         </PageLayout>
     }
 }

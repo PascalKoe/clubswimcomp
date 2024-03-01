@@ -16,7 +16,7 @@ pub fn ParticipantOverview() -> impl IntoView {
                 title="Participants Overview"
                 subtitle="An overview about every single participant that exists for this event.".to_string().into()
             />
-            <Suspense fallback=|| view!{<span class="loading loading-spinner loading-lg"></span>}>
+            <Transition fallback=|| view!{<span class="loading loading-spinner loading-lg"></span>}>
                 {
                     move || participants.get().map(|p|
                         view! {
@@ -31,7 +31,7 @@ pub fn ParticipantOverview() -> impl IntoView {
                         }
                     )
                 }
-            </Suspense>
+            </Transition>
         </PageLayout>
     }
 }

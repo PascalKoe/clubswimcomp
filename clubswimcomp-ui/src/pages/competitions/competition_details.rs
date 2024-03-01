@@ -26,7 +26,7 @@ pub fn CompetitionDetails() -> impl IntoView {
                 title="Competition Details"
                 subtitle="Details about a specific competition with all of it's registrations.".to_string().into()
             />
-            <Suspense fallback=|| view!{<span class="loading loading-spinner loading-lg"></span>}>
+            <Transition fallback=|| view!{<span class="loading loading-spinner loading-lg"></span>}>
                 {
                     move || competition_details.get().map(|cd|
                         view! {
@@ -39,7 +39,7 @@ pub fn CompetitionDetails() -> impl IntoView {
                         <CompetitionRegistrationsTable registrations=cd.registrations />
                     })
                 }
-            </Suspense>
+            </Transition>
         </PageLayout>
     }
 }
