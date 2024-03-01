@@ -7,7 +7,7 @@ use crate::{api_client, components::*};
 pub fn ParticipantOverview() -> impl IntoView {
     let participants = create_local_resource(
         || (),
-        move |_| async { api_client::participants_overview().await.unwrap() },
+        move |_| async { api_client::list_participants().await.unwrap() },
     );
 
     view! {

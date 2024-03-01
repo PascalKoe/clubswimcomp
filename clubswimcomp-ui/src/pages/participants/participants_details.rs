@@ -21,7 +21,7 @@ pub fn ParticipantDetails() -> impl IntoView {
     });
 
     let available_competitions = create_local_resource(participant_id, move |p| async move {
-        api_client::participant_available_competitions(p)
+        api_client::available_competitions_for_registration(p)
             .await
             .unwrap()
     });

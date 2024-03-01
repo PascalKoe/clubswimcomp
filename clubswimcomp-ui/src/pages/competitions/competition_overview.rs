@@ -8,7 +8,7 @@ use crate::components::*;
 pub fn CompetitionOverview() -> impl IntoView {
     let competitions = create_local_resource(
         || (),
-        move |_| async move { api_client::competition_overview().await.unwrap() },
+        move |_| async move { api_client::list_competitions().await.unwrap() },
     );
 
     view! {
