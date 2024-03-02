@@ -28,10 +28,10 @@ pub async fn registration_details(registration_id: Uuid) -> Result<model::Regist
     Ok(response.json().await.unwrap())
 }
 
-pub async fn add_result(registration_id: Uuid, disqualified: bool, time_millis: i64) -> Result<()> {
+pub async fn add_result(registration_id: Uuid, disqualified: bool, time_millis: u32) -> Result<()> {
     let body = api::EnterResultBody {
         disqualified,
-        time_millis: time_millis as _,
+        time_millis,
     };
     let response = Request::post(&format!(
         "{BASE_URL}/registrations/{registration_id}/result"

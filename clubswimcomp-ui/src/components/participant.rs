@@ -95,6 +95,7 @@ pub fn ParticipantRegistrationsTable(
     #[prop(into)] participant_id: MaybeSignal<Uuid>,
     #[prop(into, optional)] on_unregister: Option<Callback<()>>,
     #[prop(into, optional)] on_result_removed: Option<Callback<()>>,
+    #[prop(into, optional)] on_result_added: Option<Callback<()>>,
 ) -> impl IntoView {
     let (error_msg, set_error_msg) = create_signal(None);
 
@@ -138,6 +139,8 @@ pub fn ParticipantRegistrationsTable(
         };
     });
 
+    let result_dialog_id = create_rw_signal(None);
+
     let rows = move || {
         registrations()
             .into_iter()
@@ -164,12 +167,12 @@ pub fn ParticipantRegistrationsTable(
                             </CellIconButton>
                         </Show>
                         <Show when=move || !has_result>
-                            <CellIconLink
+                            <CellIconButton
                                 action_type=ActionType::Secondary
-                                href=format!("/registrations/{}", r.id)
+                                on:click=move |_| result_dialog_id.set(Some(r.id))
                             >
                                 <phosphor_leptos::Timer/>
-                            </CellIconLink>
+                            </CellIconButton>
                         </Show>
 
                         <CellsResult result=r.result />
@@ -189,6 +192,7 @@ pub fn ParticipantRegistrationsTable(
     view! {
         {on_unregistered_effect}
         {on_remove_result_effect}
+        <AddResultDialog registration_id=result_dialog_id on_result_added=on_result_added />
 
         { move || error_msg().map(|err| view! { <p class="text-error">{err}</p>}) }
         <div class="overflow-x-auto">
@@ -211,75 +215,101 @@ pub fn ParticipantRegistrationsTable(
 }
 
 #[component]
-pub fn ParticipantAvailableCompetitionsTable(
-    #[prop(optional, into)] on_registered: Option<Callback<()>>,
-    #[prop(into)] participant_id: MaybeSignal<Uuid>,
-    #[prop(into)] competitions: MaybeSignal<Vec<model::Competition>>,
+pub fn AvailableCompetitionsTable(
+    #[prop(into)] participant_id: Uuid,
+    #[prop(default = None, into)] on_registered: Option<Callback<Uuid>>,
 ) -> impl IntoView {
-    let register_for_competition = create_action(|input: &(Uuid, Uuid)| {
-        let participant_id = input.0;
-        let competition_id = input.1;
+    let (error_msg, set_error_msg) = create_signal(None);
 
-        async move {
-            api_client::register_for_competition(participant_id, competition_id)
-                .await
-                .unwrap();
-        }
-    });
-
-    let on_registered_effect = create_memo(move |_| {
-        if !register_for_competition.pending().get()
-            && register_for_competition.value().get().is_some()
-        {
-            if let Some(on_registered) = on_registered {
-                on_registered(());
+    let available_competitions = create_resource(
+        move || participant_id,
+        |participant_id| {
+            let participant_id = participant_id;
+            async move {
+                api_client::available_competitions_for_registration(participant_id)
+                    .await
+                    .unwrap()
             }
+        },
+    );
+
+    #[derive(Clone)]
+    struct RegisterAction {
+        participant_id: Uuid,
+        competition_id: Uuid,
+    }
+    let register_action = create_action(|input: &RegisterAction| {
+        let input = input.clone();
+        async move {
+            api_client::register_for_competition(input.participant_id, input.competition_id).await
         }
     });
 
-    let rows = move || {
-        competitions()
-            .into_iter()
-            .map(|r| {
-                let competition_link = format!("/competitions/{}", r.id);
-                view! {
-                    <tr>
-                        <td class="w-0">
-                            <A class="btn btn-xs" href=competition_link>
-                                <phosphor_leptos::MagnifyingGlass />
-                            </A>
-                        </td>
-                        <td><DistanceDisplay distance=r.distance /></td>
-                        <td><GenderDisplay gender=r.gender /></td>
-                        <td><StrokeDisplay stroke=r.stroke/></td>
-                        <td class="w-0">
-                            <button class="btn btn-xs btn-secondary" on:click=move |_| register_for_competition.dispatch((participant_id(), r.id))>
-                                Register
-                            </button>
-                        </td>
-                    </tr>
+    let register_action_done = move || {
+        let response = register_action.value()();
+        match response {
+            Some(Ok(registration_id)) => {
+                if let Some(on_registered) = on_registered {
+                    on_registered(registration_id);
                 }
-            })
-            .collect_view()
+            }
+            Some(Err(e)) => set_error_msg(Some(e)),
+            None => return,
+        };
+
+        register_action.value().set(None);
     };
 
+    let on_register = Callback::new(move |competition_id| {
+        let input = RegisterAction {
+            participant_id,
+            competition_id,
+        };
+        register_action.dispatch(input);
+    });
+
     view! {
-        {on_registered_effect}
+        {register_action_done}
         <div class="overflow-x-auto">
+            {move || error_msg().map(|e| view! {<p class="text-error font-bold">{e}</p>})}
             <table class="table table-xs">
                 <thead>
                     <tr>
                         <th></th>
-                        <th>Distance</th>
-                        <th>Gender</th>
-                        <th>Stroke</th>
+                        <HeadingsCompetition />
                         <th></th>
                     </tr>
                 </thead>
                 <tbody>
-                    {rows}
+                    <Transition>
+                        <For each=move || available_competitions().unwrap_or_default() key=|c| c.id let:competition>
+                            <AvailableCompetitionsRow competition on_register />
+                        </For>
+                    </Transition>
                 </tbody>
             </table>
         </div>
+    }
+}
+
+#[component]
+pub fn AvailableCompetitionsRow(
+    #[prop(into)] competition: model::Competition,
+    #[prop(into)] on_register: Callback<Uuid>,
+) -> impl IntoView {
+    let competition_id = competition.id;
+
+    view! {
+        <tr>
+            <CellIconLink href=format!("/competitions/{}", competition.id)>
+                <phosphor_leptos::MagnifyingGlass />
+            </CellIconLink>
+
+            <CellsCompetition competition />
+
+            <CellIconButton action_type=ActionType::Secondary on:click=move |_| on_register(competition_id)>
+                Register
+            </CellIconButton>
+        </tr>
     }
 }

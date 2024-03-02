@@ -54,6 +54,11 @@ pub fn ParticipantDetails() -> impl IntoView {
             .is_some_and(|pd| pd.registrations.is_empty())
     };
 
+    let on_registered = Callback::new(move |_| {
+        participant_details.refetch();
+        available_competitions.refetch();
+    });
+
     view! {
         <PageLayout>
             {redirect_on_deletion}
@@ -93,16 +98,16 @@ pub fn ParticipantDetails() -> impl IntoView {
                                 registrations=pd.registrations
                                 on_unregister=refetch_data
                                 on_result_removed=refetch_data
+                                on_result_added=refetch_data
                             />
 
                             <SectionTitle
                                 title="Available Competitions".to_string()
                                 subtitle="This is an list of competitions that can be joined by the participant.".to_string().into()
                             />
-                            <ParticipantAvailableCompetitionsTable
-                                on_registered=refetch_data
-                                participant_id=pd.participant.id
-                                competitions=available_competitions.get().unwrap_or_default()
+                            <AvailableCompetitionsTable
+                                participant_id=participant_id()
+                                on_registered
                             />
                         }
                     })

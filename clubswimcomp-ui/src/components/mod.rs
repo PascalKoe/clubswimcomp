@@ -4,11 +4,13 @@ use leptos_router::*;
 
 mod competition;
 mod event;
+mod registrations;
 mod page;
 mod participant;
 
 pub use competition::*;
 pub use event::*;
+pub use registrations::*;
 pub use page::*;
 pub use participant::*;
 
@@ -266,5 +268,79 @@ pub fn ActionButton(children: Children, action_type: ActionType) -> impl IntoVie
         <button class=format!("btn btn-sm {btn_class} rounded-full mr-4")>
             {children()}
         </button>
+    }
+}
+
+#[component]
+pub fn InputTime(#[prop(into)] set_time: WriteSignal<Option<u32>>) -> impl IntoView {
+    let input_changed = move |ev| {
+        let value = event_target_value(&ev);
+        if value.len() != 6 {
+            set_time(None);
+            return;
+        }
+
+        let Ok(min) = value[0..=1].parse::<u32>() else {
+            set_time(None);
+            return;
+        };
+
+        let sec = match value[2..=3].parse::<u32>() {
+            Ok(sec) if sec < 60 => sec,
+            _ => {
+                set_time(None);
+                return;
+            }
+        };
+
+        let Ok(hundredths) = value[4..=5].parse::<u32>() else {
+            set_time(None);
+            return;
+        };
+
+        let millis = (min * 60 * 1000) + (sec * 1000) + (hundredths * 10);
+        set_time(Some(millis));
+    };
+
+    view! {
+        <input
+            class="input input-bordered"
+            type="text"
+            minlength=6
+            maxlength=6
+            on:input=input_changed
+        />
+    }
+}
+
+#[component]
+pub fn InputGender(#[prop(into)] set_gender: WriteSignal<model::Gender>) -> impl IntoView {
+    let input_changed = move |ev| {
+        let value = event_target_value(&ev);
+        let g = match value.as_str() {
+            "F" => model::Gender::Female,
+            "M" => model::Gender::Male,
+            _ => model::Gender::Female, // Use Female as default in case of manipulation
+        };
+
+        set_gender(g);
+    };
+
+    view! {
+        <select class="input input-bordered" on:change=input_changed>
+            <option value="F">Female</option>
+            <option value="M">Male</option>
+        </select>
+    }
+}
+
+#[component]
+pub fn InputDisqualified(#[prop(into)] set_disqualified: WriteSignal<bool>) -> impl IntoView {
+    let input_changed = move |ev| {
+        set_disqualified(event_target_checked(&ev));
+    };
+
+    view! {
+        <input type="checkbox" class="checkbox" on:change=input_changed/>
     }
 }
