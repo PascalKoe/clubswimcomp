@@ -7,11 +7,11 @@ use uuid::Uuid;
 
 mod competitions;
 mod participants;
-mod results;
+mod registrations;
 
 pub use competitions::*;
 pub use participants::*;
-pub use results::*;
+pub use registrations::*;
 
 const BASE_URL: &str = "http://localhost:3000";
 type Result<T> = core::result::Result<T, String>;

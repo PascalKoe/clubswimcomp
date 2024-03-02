@@ -166,7 +166,7 @@ pub fn ParticipantRegistrationsTable(
                         <Show when=move || !has_result>
                             <CellIconLink
                                 action_type=ActionType::Secondary
-                                href=format!("/result/{}", r.id)
+                                href=format!("/registrations/{}", r.id)
                             >
                                 <phosphor_leptos::Timer/>
                             </CellIconLink>

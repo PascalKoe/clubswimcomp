@@ -21,6 +21,9 @@ pub fn Event() -> impl IntoView {
                     Print Certificates
                 </A>
             </div>
+
+            <div>
+            </div>
         </PageLayout>
     }
 }

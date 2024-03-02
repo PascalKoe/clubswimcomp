@@ -92,6 +92,7 @@ pub fn ParticipantDetails() -> impl IntoView {
                                 participant_id=pd.participant.id
                                 registrations=pd.registrations
                                 on_unregister=refetch_data
+                                on_result_removed=refetch_data
                             />
 
                             <SectionTitle
