@@ -56,7 +56,7 @@ pub fn CompetitionDetails() -> impl IntoView {
                                     disabled=move || !can_be_deleted()
                                 >
                                     <phosphor_leptos::Trash />
-                                    Delete Participant
+                                    Delete Competition
                                 </button>
                         </div>
                             <CompetitionInfoTable competition=cd.competition />

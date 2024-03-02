@@ -94,7 +94,10 @@ pub fn ParticipantRegistrationsTable(
     #[prop(into)] registrations: MaybeSignal<Vec<model::ParticipantRegistration>>,
     #[prop(into)] participant_id: MaybeSignal<Uuid>,
     #[prop(into, optional)] on_unregister: Option<Callback<()>>,
+    #[prop(into, optional)] on_result_removed: Option<Callback<()>>,
 ) -> impl IntoView {
+    let (error_msg, set_error_msg) = create_signal(None);
+
     let unregister_action = create_action(|input: &(Uuid, Uuid)| {
         let participant_id = input.0;
         let registration_id = input.1;
@@ -113,47 +116,70 @@ pub fn ParticipantRegistrationsTable(
         }
     });
 
+    let remove_result_action = create_action(|registration_id: &Uuid| {
+        let registration_id = *registration_id;
+        async move { api_client::remove_registration_result(registration_id).await }
+    });
+
+    let on_remove_result_effect = create_memo(move |_| {
+        if remove_result_action.pending().get() {
+            return;
+        }
+
+        let action_result = remove_result_action.value().get();
+        match action_result {
+            Some(Ok(_)) => {
+                if let Some(on_result_removed) = on_result_removed {
+                    on_result_removed(());
+                }
+            }
+            Some(Err(err)) => set_error_msg(Some(err)),
+            None => return, // Action is still running
+        };
+    });
+
     let rows = move || {
         registrations()
             .into_iter()
             .map(|r| {
                 let competition_link = format!("/competitions/{}", r.competition.id);
+                let has_result = r.result.is_some();
                 view! {
                     <tr>
-                        <td class="w-0">
-                            <A class="btn btn-xs" href=competition_link>
-                                <phosphor_leptos::MagnifyingGlass />
-                            </A>
-                        </td>
-                        <td><DistanceDisplay distance=r.competition.distance /></td>
-                        <td><GenderDisplay gender=r.competition.gender /></td>
-                        <td><StrokeDisplay stroke=r.competition.stroke/></td>
-                        <td>
-                            {
-                                r.result.as_ref().map(|r| if r.disqualified {
-                                    "Disqualified"
-                                } else {
-                                    "-"
-                                })
-                            }
-                        </td>
-                        <td>
-                            {
-                                r.result
-                                    .as_ref()
-                                    .map(|r| view! {
-                                        <TimeDisplay millis=r.time_millis />
-                                    })
-                            }
-                        </td>
-                        <td class="w-0">
-                            <button class="btn btn-xs btn-error" on:click=move |_| unregister_action.dispatch((participant_id(), r.id))>
-                                Unregister
-                            </button>
-                        </td>
-                        <td class="w-0">
-                            <A class="btn btn-xs btn-secondary" href="">Result</A>
-                        </td>
+                        <CellIconLink href=competition_link>
+                            <phosphor_leptos::MagnifyingGlass/>
+                        </CellIconLink>
+                        <CellsCompetition competition=r.competition />
+
+                        {
+                            // Display either Trash or Timer button based on the
+                            // existance of an registration result
+                        }
+                        <Show when=move || has_result>
+                            <CellIconButton
+                                action_type=ActionType::Error
+                                on:click=move |_| remove_result_action.dispatch(r.id)
+                            >
+                                <phosphor_leptos::Trash/>
+                            </CellIconButton>
+                        </Show>
+                        <Show when=move || !has_result>
+                            <CellIconLink
+                                action_type=ActionType::Secondary
+                                href=format!("/result/{}", r.id)
+                            >
+                                <phosphor_leptos::Timer/>
+                            </CellIconLink>
+                        </Show>
+
+                        <CellsResult result=r.result />
+
+                        <CellIconButton
+                            action_type=ActionType::Error
+                            on:click=move |_| unregister_action.dispatch((participant_id(), r.id))
+                        >
+                            "Unregister"
+                        </CellIconButton>
                     </tr>
                 }
             })
@@ -162,17 +188,17 @@ pub fn ParticipantRegistrationsTable(
 
     view! {
         {on_unregistered_effect}
+        {on_remove_result_effect}
+
+        { move || error_msg().map(|err| view! { <p class="text-error">{err}</p>}) }
         <div class="overflow-x-auto">
             <table class="table table-xs">
                 <thead>
                     <tr>
                         <th></th>
-                        <th>Distance</th>
-                        <th>Gender</th>
-                        <th>Stroke</th>
-                        <th>Disqualified</th>
-                        <th>Time</th>
+                        <HeadingsCompetition />
                         <th></th>
+                        <HeadingsResult />
                         <th></th>
                     </tr>
                 </thead>
