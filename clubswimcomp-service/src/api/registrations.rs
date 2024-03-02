@@ -4,17 +4,20 @@ use axum::{
     routing::*,
     Json,
 };
-use clubswimcomp_types::api;
+use clubswimcomp_types::{api, model};
 use tracing::instrument;
 use uuid::Uuid;
 
-use crate::services::{AddRegistrationResultError, RemoveRegistrationResultError};
+use crate::services::{
+    AddRegistrationResultError, RegistrationDetailsError, RemoveRegistrationResultError,
+};
 
 use super::{ApiError, AppState};
 
 pub fn router() -> axum::Router<super::AppState> {
     Router::new()
         .route("/", post(add_registration_result))
+        .route("/:registration_id", get(registration_details))
         .route("/:registration_id", delete(delete_result))
 }
 
@@ -36,6 +39,29 @@ impl From<&RemoveRegistrationResultError> for StatusCode {
             RemoveRegistrationResultError::RepositoryError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
+}
+
+impl From<&RegistrationDetailsError> for StatusCode {
+    fn from(err: &RegistrationDetailsError) -> Self {
+        match err {
+            RegistrationDetailsError::RegistrationDoesNotExist => StatusCode::NOT_FOUND,
+            RegistrationDetailsError::RepositoryError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+}
+
+#[instrument(skip(state))]
+async fn registration_details(
+    State(state): State<AppState>,
+    Path(registration_id): Path<Uuid>,
+) -> Result<Json<model::RegistrationDetails>, ApiError> {
+    let registration_service = state.registration_service();
+    let registration_details = registration_service
+        .registration_details(registration_id)
+        .await
+        .map_err(ApiError::from)?;
+
+    Ok(Json(registration_details))
 }
 
 #[instrument(skip(state))]

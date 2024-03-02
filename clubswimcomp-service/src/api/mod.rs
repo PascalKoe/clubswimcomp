@@ -11,7 +11,7 @@ use crate::services::{
 mod competitions;
 mod event;
 mod participants;
-mod results;
+mod registrations;
 
 struct ApiError {
     status_code: StatusCode,
@@ -121,7 +121,7 @@ impl AppState {
 pub fn routes() -> Router<AppState> {
     Router::new()
         .nest("/participants", participants::router())
-        .nest("/results", results::router())
+        .nest("/results", registrations::router())
         .nest("/competitions", competitions::router())
         .nest("/event", event::router())
 }
