@@ -16,9 +16,9 @@ use super::{ApiError, AppState};
 
 pub fn router() -> axum::Router<super::AppState> {
     Router::new()
-        .route("/", post(add_registration_result))
         .route("/:registration_id", get(registration_details))
-        .route("/:registration_id", delete(delete_result))
+        .route("/:registration_id/result", post(add_registration_result))
+        .route("/:registration_id/result", delete(delete_result))
 }
 
 impl From<&AddRegistrationResultError> for StatusCode {
@@ -67,11 +67,12 @@ async fn registration_details(
 #[instrument(skip(state))]
 async fn add_registration_result(
     State(state): State<AppState>,
+    Path(registration_id): Path<Uuid>,
     Json(b): Json<api::EnterResultBody>,
 ) -> Result<(), ApiError> {
     let result_service = state.registration_service();
     result_service
-        .add_result_for_registration(b.registration_id, b.disqualified, b.time_millis)
+        .add_result_for_registration(registration_id, b.disqualified, b.time_millis)
         .await
         .map_err(ApiError::from)
 }

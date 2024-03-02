@@ -65,6 +65,14 @@ pub struct ParticipantRegistration {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+pub struct RegistrationDetails {
+    pub id: Uuid,
+    pub participant: Participant,
+    pub competition: Competition,
+    pub result: Option<RegistrationResult>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct RegistrationResult {
     pub disqualified: bool,
     pub time_millis: i64,

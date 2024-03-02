@@ -51,7 +51,6 @@ pub struct DeleteCompetitionParams {
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct EnterResultBody {
-    pub registration_id: Uuid,
     pub disqualified: bool,
     pub time_millis: u32,
 }

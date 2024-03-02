@@ -121,7 +121,7 @@ impl AppState {
 pub fn routes() -> Router<AppState> {
     Router::new()
         .nest("/participants", participants::router())
-        .nest("/results", registrations::router())
+        .nest("/registrations", registrations::router())
         .nest("/competitions", competitions::router())
         .nest("/event", event::router())
 }
