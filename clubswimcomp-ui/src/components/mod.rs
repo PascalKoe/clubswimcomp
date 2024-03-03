@@ -4,15 +4,17 @@ use leptos_router::*;
 
 mod competition;
 mod event;
-mod registrations;
 mod page;
 mod participant;
+mod registrations;
+mod scanner;
 
 pub use competition::*;
 pub use event::*;
-pub use registrations::*;
 pub use page::*;
 pub use participant::*;
+pub use registrations::*;
+pub use scanner::*;
 
 #[component]
 pub fn GenderDisplay(
@@ -107,7 +109,7 @@ pub fn CellStroke(#[prop(into)] stroke: MaybeSignal<model::Stroke>) -> impl Into
 }
 
 #[component]
-pub fn CellTime(#[prop(into)] millis: MaybeSignal<i64>) -> impl IntoView {
+pub fn CellTime(millis: i64) -> impl IntoView {
     view! {
         <td>
             <TimeDisplay millis />
@@ -116,7 +118,7 @@ pub fn CellTime(#[prop(into)] millis: MaybeSignal<i64>) -> impl IntoView {
 }
 
 #[component]
-pub fn CellDisqualified(#[prop(into)] disqualified: bool) -> impl IntoView {
+pub fn CellDisqualified(disqualified: bool) -> impl IntoView {
     view! {
         <td>
             {

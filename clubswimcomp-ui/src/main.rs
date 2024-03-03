@@ -7,6 +7,7 @@ mod layout;
 mod pages;
 
 use layout::*;
+use uuid::Uuid;
 
 fn main() {
     console_error_panic_hook::set_once();
@@ -35,7 +36,7 @@ fn ClubSwimCompUi() -> impl IntoView {
                     <Route path="/participants/add" view=pages::AddParticipant/>
                     <Route path="/participants/:participant_id" view=pages::ParticipantDetails/>/>
 
-                    <Route path="/registrations/:registration_id" view=pages::AddResult/>
+                    <Route path="/registrations/ingest" view=pages::ResultIngest/>
                 </Routes>
             </AppShell>
         </Router>
@@ -45,6 +46,6 @@ fn ClubSwimCompUi() -> impl IntoView {
 #[component]
 fn Home() -> impl IntoView {
     view! {
-        "Home"
+        <p>Home</p>
     }
 }

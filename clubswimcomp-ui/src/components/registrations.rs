@@ -144,3 +144,21 @@ pub fn AddResultDialog(
         </dialog>
     }
 }
+
+#[component]
+pub fn ResultInfoTable(registration_result: model::RegistrationResult) -> impl IntoView {
+    view! {
+        <table class="table table-xs w-80">
+            <tbody>
+                <tr>
+                    <td class="font-bold w-40">Disqualified</td>
+                    <CellDisqualified disqualified=registration_result.disqualified />
+                </tr>
+                <tr>
+                    <td class="font-bold w-40">Time</td>
+                    <CellTime millis=registration_result.time_millis />
+                </tr>
+            </tbody>
+        </table>
+    }
+}
