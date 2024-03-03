@@ -77,6 +77,7 @@ pub struct RegistrationDetails {
 pub struct RegistrationResult {
     pub disqualified: bool,
     pub time_millis: i64,
+    pub fina_points: u32,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]

@@ -85,6 +85,7 @@ impl From<db::registrations::RegistrationResult> for RegistrationResult {
         Self {
             disqualified: r.disqualified,
             time_millis: r.time_millis,
+            fina_points: r.fina_points as _,
         }
     }
 }

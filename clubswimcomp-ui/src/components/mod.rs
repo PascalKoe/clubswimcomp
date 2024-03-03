@@ -169,6 +169,7 @@ pub fn HeadingsResult() -> impl IntoView {
     view! {
         <th>Disqualified</th>
         <th>Time</th>
+        <th>Points</th>
     }
 }
 
@@ -185,6 +186,9 @@ pub fn CellsResult(result: Option<model::RegistrationResult>) -> impl IntoView {
     view! {
         <CellDisqualified disqualified=result.disqualified />
         <CellTime millis=result.time_millis />
+        <td>
+            {result.fina_points}
+        </td>
     }
     .into_view()
 }

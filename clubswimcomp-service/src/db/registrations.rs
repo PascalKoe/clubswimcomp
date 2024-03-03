@@ -11,6 +11,7 @@ pub struct RegistrationResult {
     pub registration_id: Uuid,
     pub disqualified: bool,
     pub time_millis: i64,
+    pub fina_points: i64,
 }
 
 #[derive(Clone)]
@@ -50,9 +51,14 @@ impl Repository {
             RegistrationResult,
             r#"
                 SELECT
-                    registration_id, disqualified, time_millis
-                FROM registration_results
-                WHERE registration_id = $1;
+                    rr.registration_id,
+                    rr.disqualified,
+                    rr.time_millis,
+                    CAST(FLOOR(1000 * POWER(CAST(c.target_time AS FLOAT) / CAST(rr.time_millis AS FLOAT), 3)) AS INT) AS "fina_points!"
+                FROM registration_results rr
+                INNER JOIN registrations r ON r.id = rr.registration_id
+                INNER JOIN competitions c ON c.id = r.competition_id
+                WHERE rr.registration_id = $1;
             "#,
             registration_id
         )
