@@ -115,6 +115,7 @@ pub fn CompetitionOverviewTable(
                         <td><GenderDisplay gender=c.gender /></td>
                         <td><DistanceDisplay distance=c.distance /></td>
                         <td><StrokeDisplay stroke=c.stroke /></td>
+                        <td><TimeDisplay millis=c.target_time /></td>
                         <td class="w-0">
                             <A class="btn btn-xs" href=details_link>Details</A>
                         </td>
@@ -132,6 +133,7 @@ pub fn CompetitionOverviewTable(
                         <th>Gender</th>
                         <th>Distance</th>
                         <th>Stroke</th>
+                        <th>Target Time</th>
                         <th></th>
                     </tr>
                 </thead>

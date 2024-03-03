@@ -137,6 +137,7 @@ pub fn HeadingsCompetition() -> impl IntoView {
         <th>Distance</th>
         <th>Stroke</th>
         <th>Gender</th>
+        <th>Target Time</th>
     }
 }
 
@@ -153,10 +154,13 @@ pub fn CellsCompetition(
     let c = competition.clone();
     let gender = MaybeSignal::derive(move || c().gender);
 
+    let c = competition.clone();
+
     view! {
         <CellDistance distance />
         <CellStroke stroke />
         <CellGender gender />
+        <CellTime millis=c().target_time />
     }
 }
 
