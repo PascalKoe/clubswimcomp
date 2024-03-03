@@ -78,9 +78,9 @@
   ]
 ]
 
-#let qr_code_section = [
+#let qr_code_section(qr_code) = [
   #align(top + right)[
-    #box(width: 25mm, height: 25mm, fill: black)
+    #image.decode(qr_code, format: "svg", width: 25mm, height: 25mm)
   ]
 ]
 
@@ -158,7 +158,7 @@
 )
 
 
-#let card(first_name, last_name, distance, stroke, gender, participant_number) = [
+#let card(first_name, last_name, distance, stroke, gender, participant_number, qr_code) = [
   #top_row_layout(
     [
       #name_section(first_name, last_name)
@@ -169,7 +169,7 @@
       )
     ],
     [
-      #qr_code_section
+      #qr_code_section(qr_code)
       #participant_number_section(participant_number)
     ]
   )
@@ -185,7 +185,8 @@
     start_card.distance,
     start_card.stroke,
     start_card.gender,
-    start_card.participant_number
+    start_card.participant_number,
+    start_card.qr_code
   )
   pagebreak(weak: true)
 }

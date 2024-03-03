@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use clubswimcomp_types::model;
+use qrcode::{render::svg, QrCode};
 use thiserror::Error;
 use tracing::instrument;
 use uuid::Uuid;
@@ -110,6 +111,9 @@ impl RegistrationCardService {
                 "Competition is referenced in registration but could not be found in repository",
             )?;
 
+        let qr_code = QrCode::new(registration.id.to_string().as_bytes()).unwrap();
+        let qr_code = qr_code.render::<svg::Color>().build();
+
         Ok(Some(infra::registration_card::RegistrationCard {
             first_name: participant.first_name.clone(),
             last_name: participant.last_name.clone(),
@@ -117,6 +121,7 @@ impl RegistrationCardService {
             stroke: competition.stroke.into(),
             gender: competition.gender.into(),
             participant_number: participant.short_code.clone(),
+            qr_code,
         }))
     }
 
@@ -146,6 +151,9 @@ impl RegistrationCardService {
                     .context("Failed to load competition for registration from repository")?
                     .map(model::Competition::from)
                     .context("Competition is referenced in registration but could not be found in repository")?;
+                
+            let qr_code = QrCode::new(db_registration.id.to_string().as_bytes()).unwrap();
+            let qr_code = qr_code.render::<svg::Color>().build();
 
             let registeration_card = infra::registration_card::RegistrationCard {
                 first_name: participant.first_name.clone(),
@@ -154,6 +162,7 @@ impl RegistrationCardService {
                 stroke: competition.stroke.into(),
                 gender: competition.gender.into(),
                 participant_number: participant.short_code.clone(),
+                qr_code,
             };
 
             registration_cards.push(registeration_card);
