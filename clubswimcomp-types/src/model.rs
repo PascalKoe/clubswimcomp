@@ -40,6 +40,7 @@ pub struct Competition {
     pub gender: Gender,
     pub distance: u32,
     pub stroke: Stroke,
+    pub target_time: i64,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]

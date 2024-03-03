@@ -73,7 +73,7 @@ async fn add_competition(
 ) -> Result<Json<api::AddCompetitionResponse>, ApiError> {
     let competition_service = state.competition_service();
     let competition_id = competition_service
-        .add_competition(b.distance, b.gender, b.stroke)
+        .add_competition(b.distance, b.gender, b.stroke, b.target_time)
         .await?;
 
     Ok(Json(api::AddCompetitionResponse { competition_id }))

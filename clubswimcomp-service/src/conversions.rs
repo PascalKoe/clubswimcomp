@@ -75,6 +75,7 @@ impl From<db::competitions::Competition> for Competition {
             gender: c.gender.into(),
             distance: c.distance as _,
             stroke: c.stroke.into(),
+            target_time: c.target_time,
         }
     }
 }

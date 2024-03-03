@@ -2,7 +2,7 @@ use clubswimcomp_types::model;
 use leptos::*;
 use leptos_router::*;
 
-use super::{BirthdayDisplay, DistanceDisplay, GenderDisplay, StrokeDisplay};
+use crate::components::*;
 
 #[component]
 pub fn CompetitionInfoTable(
@@ -22,6 +22,10 @@ pub fn CompetitionInfoTable(
                 <tr>
                     <td class="font-bold w-40">Stroke</td>
                     <td><StrokeDisplay stroke={competition().stroke}/></td>
+                </tr>
+                <tr>
+                    <td class="font-bold w-40">Target Time</td>
+                    <td><TimeDisplay millis={competition().target_time}/></td>
                 </tr>
             </tbody>
         </table>

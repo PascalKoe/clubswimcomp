@@ -17,11 +17,13 @@ pub async fn add_competition(
     distance: u32,
     gender: model::Gender,
     stroke: model::Stroke,
+    target_time: u32,
 ) -> Result<Uuid> {
     let request = api::AddCompetitionRequest {
         distance,
         gender,
         stroke,
+        target_time,
     };
 
     let response = Request::post(&format!("{BASE_URL}/competitions"))

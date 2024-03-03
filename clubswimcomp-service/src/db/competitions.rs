@@ -8,6 +8,7 @@ pub struct Competition {
     pub gender: super::Gender,
     pub stroke: super::Stroke,
     pub distance: i32,
+    pub target_time: i64,
 }
 
 #[derive(Clone)]
@@ -25,18 +26,20 @@ impl Repository {
         gender: Gender,
         stroke: Stroke,
         distance: i32,
+        target_time: i64,
     ) -> Result<Uuid> {
         sqlx::query_scalar!(
             r#"
                 INSERT INTO competitions (
-                    gender, stroke, distance
+                    gender, stroke, distance, target_time
                 ) VALUES (
-                    $1, $2, $3
+                    $1, $2, $3, $4
                 ) RETURNING id;
             "#,
             gender as Gender,
             stroke as Stroke,
             distance,
+            target_time as _,
         )
         .fetch_one(&self.pool)
         .await
@@ -53,7 +56,7 @@ impl Repository {
             Competition,
             r#"
                 SELECT
-                    id, gender AS "gender: _", stroke AS "stroke: _", distance
+                    id, gender AS "gender: _", stroke AS "stroke: _", distance, target_time
                 FROM competitions
                 WHERE
                     (gender = $1 OR $1 IS NULL) AND
@@ -74,7 +77,7 @@ impl Repository {
             Competition,
             r#"
                 SELECT
-                    id, gender AS "gender: _", stroke AS "stroke: _", distance
+                    id, gender AS "gender: _", stroke AS "stroke: _", distance, target_time
                 FROM competitions;
             "#
         )
@@ -88,7 +91,7 @@ impl Repository {
             Competition,
             r#"
                 SELECT
-                    id, gender AS "gender: _", stroke AS "stroke: _", distance
+                    id, gender AS "gender: _", stroke AS "stroke: _", distance, target_time
                 FROM competitions
                 WHERE id = $1;
             "#,

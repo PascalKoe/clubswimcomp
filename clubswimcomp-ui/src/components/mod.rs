@@ -337,6 +337,27 @@ pub fn InputGender(#[prop(into)] set_gender: WriteSignal<model::Gender>) -> impl
 }
 
 #[component]
+pub fn InputDistance(#[prop(into)] set_distance: WriteSignal<u32>) -> impl IntoView {
+    let input_changed = move |ev| {
+        let value = event_target_value(&ev);
+        let dist = match value.as_str() {
+            "25" => 25,
+            "50" => 50,
+            _ => 25,
+        };
+
+        set_distance(dist);
+    };
+
+    view! {
+        <select class="input input-bordered" on:change=input_changed>
+            <option value="25">25 Meters</option>
+            <option value="50">50 Meters</option>
+        </select>
+    }
+}
+
+#[component]
 pub fn InputDisqualified(#[prop(into)] set_disqualified: WriteSignal<bool>) -> impl IntoView {
     let input_changed = move |ev| {
         set_disqualified(event_target_checked(&ev));
@@ -344,5 +365,30 @@ pub fn InputDisqualified(#[prop(into)] set_disqualified: WriteSignal<bool>) -> i
 
     view! {
         <input type="checkbox" class="checkbox" on:change=input_changed/>
+    }
+}
+
+#[component]
+pub fn InputStroke(#[prop(into)] set_stroke: WriteSignal<model::Stroke>) -> impl IntoView {
+    let input_changed = move |ev| {
+        let value = event_target_value(&ev);
+        let s = match value.as_str() {
+            "Butterfly" => model::Stroke::Butterfly,
+            "Back" => model::Stroke::Back,
+            "Breast" => model::Stroke::Breast,
+            "Freestyle" => model::Stroke::Freestyle,
+            _ => model::Stroke::Butterfly,
+        };
+
+        set_stroke(s);
+    };
+
+    view! {
+        <select class="input input-bordered" on:change=input_changed>
+            <option value="Butterfly">Butterfly</option>
+            <option value="Back">Back</option>
+            <option value="Breast">Breast</option>
+            <option value="Freestyle">Freestyle</option>
+        </select>
     }
 }

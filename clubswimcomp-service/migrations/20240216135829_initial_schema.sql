@@ -31,6 +31,7 @@ CREATE TABLE competitions (
 	gender		gender			NOT NULL,
 	stroke		stroke			NOT NULL,
 	distance	INT				NOT NULL 					CHECK((distance % 25) = 0 AND distance > 0),
+	target_time INT				NOT NULL					CHECK (target_time > 0),
 	CONSTRAINT no_same_competitions UNIQUE (gender, stroke, distance)
 );
 

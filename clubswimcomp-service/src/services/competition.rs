@@ -92,6 +92,7 @@ impl CompetitionService {
         distance: u32,
         gender: model::Gender,
         stroke: model::Stroke,
+        target_time: u32,
     ) -> Result<Uuid, AddCompetitionError> {
         tracing::debug!("Checking if the provided distance is valid");
         if distance % 25 != 0 {
@@ -119,7 +120,12 @@ impl CompetitionService {
         tracing::debug!("Creating the competition in the repository");
         let competition_id = self
             .competition_repo
-            .create_competition(gender.into(), stroke.into(), distance as _)
+            .create_competition(
+                gender.into(),
+                stroke.into(),
+                distance as _,
+                target_time as _,
+            )
             .await
             .context("Failed to create competition in repository")?;
 

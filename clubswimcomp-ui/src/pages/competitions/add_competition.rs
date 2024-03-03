@@ -8,42 +8,46 @@ use crate::{api_client, components::*};
 pub fn AddCompetition() -> impl IntoView {
     let navigate = leptos_router::use_navigate();
 
-    let gender: NodeRef<html::Select> = create_node_ref();
-    let distance: NodeRef<html::Select> = create_node_ref();
-    let stroke: NodeRef<html::Select> = create_node_ref();
+    let (gender, set_gender) = create_signal(model::Gender::Female);
+    let (stroke, set_stroke) = create_signal(model::Stroke::Butterfly);
+    let (distance, set_distance) = create_signal(25);
+    let (target_time, set_target_time) = create_signal(None);
 
-    let add_competition_action = create_action(|input: &(model::Gender, u32, model::Stroke)| {
-        let gender = input.0.clone();
-        let distance = input.1.clone();
-        let stroke = input.2.clone();
+    #[derive(Clone)]
+    struct AddCompetitionAction {
+        distance: u32,
+        stroke: model::Stroke,
+        gender: model::Gender,
+        target_time: u32,
+    }
+    let add_competition_action = create_action(|input: &AddCompetitionAction| {
+        let input = input.clone();
 
-        async move { api_client::add_competition(distance, gender, stroke).await }
+        async move {
+            api_client::add_competition(
+                input.distance,
+                input.gender,
+                input.stroke,
+                input.target_time as _,
+            )
+            .await
+        }
     });
 
     let on_submit = move |ev: leptos::ev::SubmitEvent| {
         ev.prevent_default();
 
-        let gender = match gender().unwrap().value().as_str() {
-            "Female" => model::Gender::Female,
-            "Male" => model::Gender::Male,
-            _ => panic!("Could not parse gender"),
+        let Some(target_time) = target_time() else {
+            return;
         };
 
-        let distance = match distance().unwrap().value().as_str() {
-            "25" => 25,
-            "50" => 50,
-            _ => panic!("Could not parse distance"),
+        let input = AddCompetitionAction {
+            distance: distance(),
+            stroke: stroke(),
+            gender: gender(),
+            target_time: target_time,
         };
-
-        let stroke = match stroke().unwrap().value().as_str() {
-            "Butterfly" => model::Stroke::Butterfly,
-            "Back" => model::Stroke::Back,
-            "Breast" => model::Stroke::Breast,
-            "Freestyle" => model::Stroke::Freestyle,
-            _ => panic!("Could not parse stroke"),
-        };
-
-        add_competition_action.dispatch((gender, distance, stroke));
+        add_competition_action.dispatch(input);
     };
 
     let saving = move || add_competition_action.pending().get();
@@ -71,28 +75,20 @@ pub fn AddCompetition() -> impl IntoView {
 
             <form on:submit=on_submit>
                 <FormItem label="Distance">
-                    <select class="select select-bordered" node_ref=distance required>
-                        <option value="25">25 Meters</option>
-                        <option value="50">50 Meters</option>
-                    </select>
+                    <InputDistance set_distance />
                 </FormItem>
 
                 <FormItem label="Stroke">
-                    <select class="select select-bordered" node_ref=stroke required>
-                        <option value="Butterfly">Butterfly</option>
-                        <option value="Back">Back</option>
-                        <option value="Breast">Breast</option>
-                        <option value="Freestyle">Freestyle</option>
-                    </select>
+                    <InputStroke set_stroke />
                 </FormItem>
 
                 <FormItem label="Gender">
-                    <select class="select select-bordered" node_ref=gender required>
-                        <option value="Female">Female</option>
-                        <option value="Male">Male</option>
-                    </select>
+                    <InputGender set_gender />
                 </FormItem>
 
+                <FormItem label="Target Time">
+                    <InputTime set_time=set_target_time />
+                </FormItem>
                 {
                     move|| error_message().map(|e| view!{<p class="text text-error">{e}</p>})
                 }

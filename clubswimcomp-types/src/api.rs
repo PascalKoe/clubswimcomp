@@ -37,6 +37,7 @@ pub struct AddCompetitionRequest {
     pub gender: model::Gender,
     pub stroke: model::Stroke,
     pub distance: u32,
+    pub target_time: u32,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
