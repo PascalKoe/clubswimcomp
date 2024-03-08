@@ -1,9 +1,4 @@
-use axum::{
-    extract::*,
-    http::{header, HeaderMap, StatusCode},
-    routing::*,
-    Json,
-};
+use axum::{extract::*, http::StatusCode, routing::*};
 use clubswimcomp_types::{
     api::{AddGroupRequest, AddGroupResponse},
     model,

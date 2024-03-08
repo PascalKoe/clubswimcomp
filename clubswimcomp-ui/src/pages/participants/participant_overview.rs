@@ -35,7 +35,7 @@ pub fn ParticipantOverview() -> impl IntoView {
                 {
                     move || participants.get().map(|p|
                         view! {
-                            <ParticipantOverviewTable participants=p />
+                            <tables::ParticipantOverview participants=p />
                         }
                     )
                 }

@@ -42,7 +42,7 @@ pub struct Competition {
     pub gender: Gender,
     pub distance: u32,
     pub stroke: Stroke,
-    pub target_time: i64,
+    pub target_time: u32,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -78,7 +78,7 @@ pub struct RegistrationDetails {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct RegistrationResult {
     pub disqualified: bool,
-    pub time_millis: i64,
+    pub time_millis: u32,
     pub fina_points: u32,
 }
 

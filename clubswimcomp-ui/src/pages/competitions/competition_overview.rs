@@ -30,13 +30,13 @@ pub fn CompetitionOverview() -> impl IntoView {
                     Add a new competition
                 </button>
             </ActionRow>
-            
+
             <SectionTitle title="Competitions" subtitle="List of all competitions.".to_string().into() />
             <Transition fallback=|| view!{<span class="loading loading-spinner loading-lg"></span>}>
                 {
                     move || competitions.get().map(|c|
                         view! {
-                            <CompetitionOverviewTable competitions=c />
+                            <tables::CompetitionOverview competitions=c />
                         }
                     )
                 }

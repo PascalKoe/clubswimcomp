@@ -1,8 +1,6 @@
 use anyhow::{Context as _, Result};
 use uuid::Uuid;
 
-use super::{Gender, Stroke};
-
 pub struct Group {
     pub id: Uuid,
     pub name: String,

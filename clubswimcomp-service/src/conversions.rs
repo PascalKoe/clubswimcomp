@@ -76,7 +76,7 @@ impl From<db::competitions::Competition> for Competition {
             gender: c.gender.into(),
             distance: c.distance as _,
             stroke: c.stroke.into(),
-            target_time: c.target_time,
+            target_time: c.target_time as _,
         }
     }
 }
@@ -85,7 +85,7 @@ impl From<db::registrations::RegistrationResult> for RegistrationResult {
     fn from(r: db::registrations::RegistrationResult) -> Self {
         Self {
             disqualified: r.disqualified,
-            time_millis: r.time_millis,
+            time_millis: r.time_millis as _,
             fina_points: r.fina_points as _,
         }
     }

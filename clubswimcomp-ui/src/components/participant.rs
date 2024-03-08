@@ -1,101 +1,7 @@
 use leptos::*;
-use leptos_router::*;
-use uuid::Uuid;
+use participant::tables::{cells, columns};
 
-use crate::{api_client, components::*};
-
-#[component]
-pub fn ParticipantInfoTable(
-    #[prop(into)] participant: MaybeSignal<model::Participant>,
-    #[prop(into, optional)] group_name: Option<MaybeSignal<String>>,
-) -> impl IntoView {
-    view! {
-        <table class="table table-xs w-80">
-            <tbody>
-                <tr>
-                    <td class="font-bold w-40">Code</td>
-                    <td>{participant().short_code}</td>
-                </tr>
-                <tr>
-                    <td class="font-bold w-40">Last Name</td>
-                    <td>{participant().last_name}</td>
-                </tr>
-                <tr>
-                    <td class="font-bold w-40">First Name</td>
-                    <td>{participant().first_name}</td>
-                </tr>
-                <tr>
-                    <td class="font-bold w-40">Gender</td>
-                    <td><GenderDisplay gender={participant().gender}/></td>
-                </tr>
-                <tr>
-                    <td class="font-bold w-40">Birthday</td>
-                    <td><BirthdayDisplay birthday=participant().birthday /></td>
-                </tr>
-
-                <tr>
-                    <td class="font-bold w-40">Age</td>
-                    <td>{participant().age}</td>
-                </tr>
-
-                {move || group_name.as_ref().map(|g| view! {
-                    <tr>
-                        <td class="font-bold w-40">Group</td>
-                        <td>{g()}</td>
-                    </tr>
-                })}
-            </tbody>
-        </table>
-    }
-}
-
-#[component]
-pub fn ParticipantOverviewTable(
-    #[prop(into)] participants: MaybeSignal<Vec<model::Participant>>,
-) -> impl IntoView {
-    let rows = move || {
-        participants()
-            .into_iter()
-            .map(|p| {
-                let details_link = format!("/participants/{}", p.id);
-                view! {
-                    <tr>
-                        <td>{p.short_code}</td>
-                        <td>{p.last_name}</td>
-                        <td>{p.first_name}</td>
-                        <td><GenderDisplay gender=p.gender /></td>
-                        <td><BirthdayDisplay birthday=p.birthday /></td>
-                        <td>{p.age}</td>
-                        <td class="w-0">
-                            <A class="btn btn-xs" href=details_link>Details</A>
-                        </td>
-                    </tr>
-                }
-            })
-            .collect_view()
-    };
-
-    view! {
-        <div class="overflow-x-auto">
-            <table class="table table-xs">
-                <thead>
-                    <tr>
-                        <th>Code</th>
-                        <th>Last Name</th>
-                        <th>First Name</th>
-                        <th>Gender</th>
-                        <th>Birthday</th>
-                        <th>Age</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {rows}
-                </tbody>
-            </table>
-        </div>
-    }
-}
+use crate::components::*;
 
 #[component]
 pub fn ParticipantRegistrationsTable(
@@ -157,40 +63,40 @@ pub fn ParticipantRegistrationsTable(
                 let has_result = r.result.is_some();
                 view! {
                     <tr>
-                        <CellIconLink href=competition_link>
+                        <cells::Link href=competition_link>
                             <phosphor_leptos::MagnifyingGlass/>
-                        </CellIconLink>
-                        <CellsCompetition competition=r.competition />
+                        </cells::Link>
+                        <columns::Competition competition=r.competition />
 
                         {
                             // Display either Trash or Timer button based on the
                             // existance of an registration result
                         }
                         <Show when=move || has_result>
-                            <CellIconButton
+                            <cells::Button
                                 action_type=ActionType::Error
                                 on:click=move |_| remove_result_action.dispatch(r.id)
                             >
                                 <phosphor_leptos::Trash/>
-                            </CellIconButton>
+                            </cells::Button>
                         </Show>
                         <Show when=move || !has_result>
-                            <CellIconButton
+                            <cells::Button
                                 action_type=ActionType::Secondary
                                 on:click=move |_| result_dialog_id.set(Some(r.id))
                             >
                                 <phosphor_leptos::Timer/>
-                            </CellIconButton>
+                            </cells::Button>
                         </Show>
 
-                        <CellsResult result=r.result />
+                        <columns::RegistrationResult registration_result=r.result />
 
-                        <CellIconButton
+                        <cells::Button
                             action_type=ActionType::Error
                             on:click=move |_| unregister_action.dispatch((participant_id(), r.id))
                         >
                             "Unregister"
-                        </CellIconButton>
+                        </cells::Button>
                     </tr>
                 }
             })
@@ -208,9 +114,9 @@ pub fn ParticipantRegistrationsTable(
                 <thead>
                     <tr>
                         <th></th>
-                        <HeadingsCompetition />
+                        <columns::CompetitionHeadings />
                         <th></th>
-                        <HeadingsResult />
+                        <columns::RegistrationResultHeadings />
                         <th></th>
                     </tr>
                 </thead>
@@ -284,7 +190,7 @@ pub fn AvailableCompetitionsTable(
                 <thead>
                     <tr>
                         <th></th>
-                        <HeadingsCompetition />
+                        <columns::CompetitionHeadings />
                         <th></th>
                     </tr>
                 </thead>
@@ -309,15 +215,15 @@ pub fn AvailableCompetitionsRow(
 
     view! {
         <tr>
-            <CellIconLink href=format!("/competitions/{}", competition.id)>
+            <cells::Link href=format!("/competitions/{}", competition.id)>
                 <phosphor_leptos::MagnifyingGlass />
-            </CellIconLink>
+            </cells::Link>
 
-            <CellsCompetition competition />
+            <columns::Competition competition />
 
-            <CellIconButton action_type=ActionType::Secondary on:click=move |_| on_register(competition_id)>
+            <cells::Button action_type=ActionType::Secondary on:click=move |_| on_register(competition_id)>
                 Register
-            </CellIconButton>
+            </cells::Button>
         </tr>
     }
 }
@@ -369,9 +275,11 @@ pub fn AddParticipantForm(
         ev.prevent_default();
 
         let Some(birthday) = birthday() else {
+            leptos::logging::warn!("Missing birthday");
             return;
         };
         let Some(group_id) = group_id() else {
+            leptos::logging::warn!("Missing group id");
             return;
         };
 

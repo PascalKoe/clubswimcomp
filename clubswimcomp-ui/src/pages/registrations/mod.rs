@@ -62,10 +62,10 @@ pub fn ResultIngest() -> impl IntoView {
                         <SectionTitle title="Registration Details"/>
                         <div class="flex flex-row w-full">
                             <div class="">
-                                <ParticipantInfoTable participant=rd.participant.clone() />
+                                <data::ParticipantInfo participant=rd.participant.clone() />
                             </div>
                             <div class="flex-1">
-                                <CompetitionInfoTable competition=rd.competition.clone() />
+                                <data::CompetitionInfo competition=rd.competition.clone() />
                             </div>
                         </div>
 

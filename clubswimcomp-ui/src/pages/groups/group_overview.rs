@@ -35,7 +35,7 @@ pub fn GroupOverview() -> impl IntoView {
                 {
                     move || groups.get().map(|g|
                         view! {
-                            <GroupOverviewTable groups=g />
+                            <tables::GroupOverview groups=g />
                         }
                     )
                 }

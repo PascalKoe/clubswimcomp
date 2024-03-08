@@ -3,15 +3,16 @@ use leptos::*;
 use leptos_router::*;
 
 mod competition;
-mod event;
+pub mod data;
 mod group;
 mod page;
 mod participant;
 mod registrations;
 mod scanner;
+pub mod tables;
+pub mod values;
 
 pub use competition::*;
-pub use event::*;
 pub use group::*;
 pub use page::*;
 pub use participant::*;
@@ -20,50 +21,6 @@ pub use scanner::*;
 use uuid::Uuid;
 
 use crate::api_client;
-
-#[component]
-pub fn GenderDisplay(
-    #[prop(into)] gender: MaybeSignal<model::Gender>,
-    #[prop(optional)] short: bool,
-) -> impl IntoView {
-    move || match (gender(), short) {
-        (model::Gender::Female, false) => "Female",
-        (model::Gender::Female, true) => "F",
-        (model::Gender::Male, false) => "Male",
-        (model::Gender::Male, true) => "M",
-    }
-}
-
-#[component]
-pub fn DistanceDisplay(#[prop(into)] distance: MaybeSignal<u32>) -> impl IntoView {
-    view! {
-        {distance} "m"
-    }
-}
-
-#[component]
-pub fn StrokeDisplay(#[prop(into)] stroke: MaybeSignal<model::Stroke>) -> impl IntoView {
-    move || match stroke() {
-        model::Stroke::Butterfly => "Butterfly",
-        model::Stroke::Back => "Backstroke",
-        model::Stroke::Breast => "Breaststroke",
-        model::Stroke::Freestyle => "Freestyle",
-    }
-}
-
-#[component]
-pub fn BirthdayDisplay(#[prop(into)] birthday: MaybeSignal<chrono::NaiveDate>) -> impl IntoView {
-    move || birthday().format("%Y-%m-%d").to_string()
-}
-
-#[component]
-pub fn TimeDisplay(#[prop(into)] millis: MaybeSignal<i64>) -> impl IntoView {
-    let minutes = move || millis() / (60 * 1000);
-    let seconds = move || (millis() / 1000) % 60;
-    let hundreths = move || (millis() / 10) % 100;
-
-    move || format!("{:02}:{:02},{:02}", minutes(), seconds(), hundreths())
-}
 
 #[component]
 pub fn FormItem(#[prop(into)] label: String, children: Children) -> impl IntoView {
@@ -86,118 +43,6 @@ pub fn ActionRow(children: Children) -> impl IntoView {
     }
 }
 
-#[component]
-pub fn CellGender(#[prop(into)] gender: MaybeSignal<model::Gender>) -> impl IntoView {
-    view! {
-        <td>
-            <GenderDisplay gender />
-        </td>
-    }
-}
-
-#[component]
-pub fn CellDistance(#[prop(into)] distance: MaybeSignal<u32>) -> impl IntoView {
-    view! {
-        <td>
-            <DistanceDisplay distance />
-        </td>
-    }
-}
-
-#[component]
-pub fn CellStroke(#[prop(into)] stroke: MaybeSignal<model::Stroke>) -> impl IntoView {
-    view! {
-        <td>
-            <StrokeDisplay stroke />
-        </td>
-    }
-}
-
-#[component]
-pub fn CellTime(millis: i64) -> impl IntoView {
-    view! {
-        <td>
-            <TimeDisplay millis />
-        </td>
-    }
-}
-
-#[component]
-pub fn CellDisqualified(disqualified: bool) -> impl IntoView {
-    view! {
-        <td>
-            {
-                match disqualified {
-                    true => "Disqualified",
-                    false => "-"
-                }
-            }
-        </td>
-    }
-}
-
-#[component]
-pub fn HeadingsCompetition() -> impl IntoView {
-    view! {
-        <th>Distance</th>
-        <th>Stroke</th>
-        <th>Gender</th>
-        <th>Target Time</th>
-    }
-}
-
-#[component]
-pub fn CellsCompetition(
-    #[prop(into)] competition: MaybeSignal<model::Competition>,
-) -> impl IntoView {
-    let c = competition.clone();
-    let distance = MaybeSignal::derive(move || c().distance);
-
-    let c = competition.clone();
-    let stroke = MaybeSignal::derive(move || c().stroke);
-
-    let c = competition.clone();
-    let gender = MaybeSignal::derive(move || c().gender);
-
-    let c = competition.clone();
-
-    view! {
-        <CellDistance distance />
-        <CellStroke stroke />
-        <CellGender gender />
-        <CellTime millis=c().target_time />
-    }
-}
-
-#[component]
-pub fn HeadingsResult() -> impl IntoView {
-    view! {
-        <th>Disqualified</th>
-        <th>Time</th>
-        <th>Points</th>
-    }
-}
-
-#[component]
-pub fn CellsResult(result: Option<model::RegistrationResult>) -> impl IntoView {
-    let Some(result) = result else {
-        return view! {
-            <td></td>
-            <td></td>
-        }
-        .into_view();
-    };
-
-    view! {
-        <CellDisqualified disqualified=result.disqualified />
-        <CellTime millis=result.time_millis />
-        <td>
-            {result.fina_points}
-        </td>
-    }
-    .into_view()
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum ActionType {
     #[default]
@@ -217,62 +62,6 @@ impl ActionType {
             ActionType::Secondary => "btn-secondary",
             ActionType::Error => "btn-error",
         }
-    }
-}
-
-#[component]
-pub fn TableIconButton(
-    children: Children,
-    #[prop(default = Default::default())] action_type: ActionType,
-) -> impl IntoView {
-    let btn_class = action_type.as_class();
-    view! {
-        <button class=format!("btn btn-xs {btn_class}")>
-            {children()}
-        </button>
-    }
-}
-
-#[component]
-pub fn CellIconButton(
-    children: Children,
-    #[prop(default = Default::default())] action_type: ActionType,
-) -> impl IntoView {
-    view! {
-        <td class="w-0">
-            <TableIconButton action_type>
-                {children()}
-            </TableIconButton>
-        </td>
-    }
-}
-
-#[component]
-pub fn TableIconLink(
-    children: Children,
-    #[prop(default = Default::default())] action_type: ActionType,
-    #[prop(into)] href: MaybeSignal<String>,
-) -> impl IntoView {
-    let btn_class = action_type.as_class();
-    view! {
-        <A class=format!("btn btn-xs {btn_class}") href>
-            {children()}
-        </A>
-    }
-}
-
-#[component]
-pub fn CellIconLink(
-    children: Children,
-    #[prop(default = Default::default())] action_type: ActionType,
-    #[prop(into)] href: MaybeSignal<String>,
-) -> impl IntoView {
-    view! {
-        <td class="w-0">
-            <TableIconLink action_type href>
-                {children()}
-            </TableIconLink>
-        </td>
     }
 }
 
@@ -445,41 +234,13 @@ pub fn InputGroup(#[prop(into)] set_group_id: WriteSignal<Option<Uuid>>) -> impl
     );
 
     view! {
-        <select class="input input-bordered" on:change=input_changed>
+        <select class="input input-bordered" on:input=input_changed>
+            <option selected></option>
             <Transition>
                 <For each=move || available_groups().unwrap_or_default() key=|g| g.id let:group>
                     <option value={group.id.to_string()}>{group.name}</option>
                 </For>
             </Transition>
         </select>
-    }
-}
-
-#[component]
-pub fn CellDate(date: chrono::NaiveDate) -> impl IntoView {
-    view! {
-        <td><BirthdayDisplay birthday=date /></td>
-    }
-}
-
-#[component]
-pub fn HeadingsParticipant() -> impl IntoView {
-    view! {
-        <th>Code</th>
-        <th>Last Name</th>
-        <th>First Name</th>
-        <th>Gender</th>
-        <th>Birthday</th>
-    }
-}
-
-#[component]
-pub fn CellsParticipant(participant: model::Participant) -> impl IntoView {
-    view! {
-        <td>{participant.short_code}</td>
-        <td>{participant.last_name}</td>
-        <td>{participant.first_name}</td>
-        <CellGender gender=participant.gender />
-        <CellDate date=participant.birthday />
     }
 }

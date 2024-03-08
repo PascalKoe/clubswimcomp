@@ -1,7 +1,7 @@
 use leptos::*;
-use uuid::Uuid;
 
-use crate::{api_client, components::*};
+use crate::components::tables::cells;
+use crate::components::*;
 
 #[component]
 pub fn AddResultForm(
@@ -152,11 +152,11 @@ pub fn ResultInfoTable(registration_result: model::RegistrationResult) -> impl I
             <tbody>
                 <tr>
                     <td class="font-bold w-40">Disqualified</td>
-                    <CellDisqualified disqualified=registration_result.disqualified />
+                    <cells::Disqualified disqualified=registration_result.disqualified />
                 </tr>
                 <tr>
                     <td class="font-bold w-40">Time</td>
-                    <CellTime millis=registration_result.time_millis />
+                    <cells::Time millis=registration_result.time_millis />
                 </tr>
             </tbody>
         </table>

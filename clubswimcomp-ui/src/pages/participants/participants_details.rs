@@ -87,7 +87,7 @@ pub fn ParticipantDetails() -> impl IntoView {
                                 </button>
                             </ActionRow>
 
-                            <ParticipantInfoTable participant=pd.participant.clone() group_name=pd.group.name />
+                            <data::ParticipantInfo participant=pd.participant.clone() />
 
                             <SectionTitle
                                 title="Registrations".to_string()

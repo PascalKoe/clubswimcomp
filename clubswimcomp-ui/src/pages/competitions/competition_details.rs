@@ -59,7 +59,7 @@ pub fn CompetitionDetails() -> impl IntoView {
                                     Delete Competition
                                 </button>
                         </div>
-                            <CompetitionInfoTable competition=cd.competition />
+                            <data::CompetitionInfo competition=cd.competition />
 
                             <SectionTitle
                                 title="Registrations".to_string()

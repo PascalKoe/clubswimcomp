@@ -1,37 +1,7 @@
-use clubswimcomp_types::model;
 use leptos::*;
 use leptos_router::*;
-use uuid::Uuid;
 
-use crate::{api_client, components::*};
-
-#[component]
-pub fn CompetitionInfoTable(
-    #[prop(into)] competition: MaybeSignal<model::Competition>,
-) -> impl IntoView {
-    view! {
-        <table class="table table-xs w-80">
-            <tbody>
-                <tr>
-                    <td class="font-bold w-40">Gender</td>
-                    <td><GenderDisplay gender={competition().gender}/></td>
-                </tr>
-                <tr>
-                    <td class="font-bold w-40">Distance</td>
-                    <td><DistanceDisplay distance={competition().distance}/></td>
-                </tr>
-                <tr>
-                    <td class="font-bold w-40">Stroke</td>
-                    <td><StrokeDisplay stroke={competition().stroke}/></td>
-                </tr>
-                <tr>
-                    <td class="font-bold w-40">Target Time</td>
-                    <td><TimeDisplay millis={competition().target_time}/></td>
-                </tr>
-            </tbody>
-        </table>
-    }
-}
+use crate::components::*;
 
 #[component]
 pub fn CompetitionRegistrationsTable(
@@ -54,8 +24,8 @@ pub fn CompetitionRegistrationsTable(
                         <td>{r.participant.short_code}</td>
                         <td>{r.participant.last_name}</td>
                         <td>{r.participant.first_name}</td>
-                        <td><GenderDisplay gender=r.participant.gender /></td>
-                        <td><BirthdayDisplay birthday=r.participant.birthday /></td>
+                        <td><values::Gender gender=r.participant.gender /></td>
+                        <td><values::Date date=r.participant.birthday /></td>
                         <td>
                             {
                                 if r.result.is_some() {
@@ -96,50 +66,6 @@ pub fn CompetitionRegistrationsTable(
                 </thead>
                 <tbody>
                     {move || rows()}
-                </tbody>
-            </table>
-        </div>
-    }
-}
-
-#[component]
-pub fn CompetitionOverviewTable(
-    #[prop(into)] competitions: MaybeSignal<Vec<model::Competition>>,
-) -> impl IntoView {
-    let rows = move || {
-        competitions()
-            .into_iter()
-            .map(|c| {
-                let details_link = format!("/competitions/{}", c.id);
-                view! {
-                    <tr>
-                        <td><GenderDisplay gender=c.gender /></td>
-                        <td><DistanceDisplay distance=c.distance /></td>
-                        <td><StrokeDisplay stroke=c.stroke /></td>
-                        <td><TimeDisplay millis=c.target_time /></td>
-                        <td class="w-0">
-                            <A class="btn btn-xs" href=details_link>Details</A>
-                        </td>
-                    </tr>
-                }
-            })
-            .collect_view()
-    };
-
-    view! {
-        <div class="overflow-x-auto">
-            <table class="table table-xs">
-                <thead>
-                    <tr>
-                        <th>Gender</th>
-                        <th>Distance</th>
-                        <th>Stroke</th>
-                        <th>Target Time</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {rows}
                 </tbody>
             </table>
         </div>
