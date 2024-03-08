@@ -1,8 +1,9 @@
 use clubswimcomp_types::model;
 use leptos::*;
 use leptos_router::*;
+use uuid::Uuid;
 
-use crate::components::*;
+use crate::{api_client, components::*};
 
 #[component]
 pub fn CompetitionInfoTable(
@@ -142,5 +143,125 @@ pub fn CompetitionOverviewTable(
                 </tbody>
             </table>
         </div>
+    }
+}
+
+#[component]
+pub fn AddCompetitionForm(
+    on_competition_added: Callback<Uuid>,
+    on_cancel: Callback<()>,
+) -> impl IntoView {
+    let (error_message, set_error_message) = create_signal(None);
+
+    let (gender, set_gender) = create_signal(model::Gender::Female);
+    let (stroke, set_stroke) = create_signal(model::Stroke::Butterfly);
+    let (distance, set_distance) = create_signal(25);
+    let (target_time, set_target_time) = create_signal(None);
+
+    #[derive(Clone)]
+    struct AddCompetitionAction {
+        distance: u32,
+        stroke: model::Stroke,
+        gender: model::Gender,
+        target_time: u32,
+    }
+    let add_competition_action = create_action(|input: &AddCompetitionAction| {
+        let input = input.clone();
+        async move {
+            api_client::add_competition(
+                input.distance,
+                input.gender,
+                input.stroke,
+                input.target_time as _,
+            )
+            .await
+        }
+    });
+
+    let on_competition_added_handler = move || match add_competition_action.value().get() {
+        Some(Ok(competition_id)) => on_competition_added(competition_id),
+        Some(Err(e)) => set_error_message(Some(e)),
+        None => (),
+    };
+
+    let competition_saving = move || add_competition_action.pending().get();
+
+    let on_submit = move |ev: leptos::ev::SubmitEvent| {
+        ev.prevent_default();
+
+        let Some(target_time) = target_time() else {
+            return;
+        };
+
+        let input = AddCompetitionAction {
+            distance: distance(),
+            stroke: stroke(),
+            gender: gender(),
+            target_time: target_time,
+        };
+        add_competition_action.dispatch(input);
+    };
+
+    let on_cancel_button_clicked = move |_| {
+        on_cancel(());
+    };
+
+    view! {
+        {on_competition_added_handler}
+
+        <form on:submit=on_submit>
+            <FormItem label="Distance">
+                <InputDistance set_distance />
+            </FormItem>
+
+            <FormItem label="Stroke">
+                <InputStroke set_stroke />
+            </FormItem>
+
+            <FormItem label="Gender">
+                <InputGender set_gender />
+            </FormItem>
+
+            <FormItem label="Target Time">
+                <InputTime set_time=set_target_time />
+            </FormItem>
+            {
+                move|| error_message().map(|e| view!{<p class="text text-error">{e}</p>})
+            }
+
+            <div class="form-control w-full max-w-2xl mt-4">
+                <input class="btn btn-primary" type="submit" value="Add Competition" disabled=competition_saving />
+            </div>
+            <div class="form-control w-full max-w-2xl mt-4">
+                <button class="btn btn-neutral" on:click=on_cancel_button_clicked>
+                    Cancel
+                </button>
+            </div>
+        </form>
+    }
+}
+
+#[component]
+pub fn AddCompetitionDialog(
+    #[prop(into)] show: RwSignal<bool>,
+    on_competition_added: Callback<Uuid>,
+) -> impl IntoView {
+    let on_added_callback = Callback::new(move |competition_id| {
+        show.set(false);
+        on_competition_added(competition_id);
+    });
+
+    let on_cancel = Callback::new(move |()| show.set(false));
+
+    view! {
+        <dialog class="modal bg-black bg-opacity-30" autofocus open=show>
+            <div class="modal-box">
+                <h3 class="text-xl text-black">Add a Competition</h3>
+                <AddCompetitionForm
+                    on_competition_added=on_added_callback
+                    on_cancel
+                />
+            </div>
+        </dialog>
     }
 }
