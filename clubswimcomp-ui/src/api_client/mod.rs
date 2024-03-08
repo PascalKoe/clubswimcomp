@@ -6,10 +6,12 @@ use gloo_net::http::Request;
 use uuid::Uuid;
 
 mod competitions;
+mod groups;
 mod participants;
 mod registrations;
 
 pub use competitions::*;
+pub use groups::*;
 pub use participants::*;
 pub use registrations::*;
 

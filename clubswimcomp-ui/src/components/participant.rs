@@ -7,6 +7,7 @@ use crate::{api_client, components::*};
 #[component]
 pub fn ParticipantInfoTable(
     #[prop(into)] participant: MaybeSignal<model::Participant>,
+    #[prop(into, optional)] group_name: Option<MaybeSignal<String>>,
 ) -> impl IntoView {
     view! {
         <table class="table table-xs w-80">
@@ -36,6 +37,13 @@ pub fn ParticipantInfoTable(
                     <td class="font-bold w-40">Age</td>
                     <td>{participant().age}</td>
                 </tr>
+
+                {move || group_name.as_ref().map(|g| view! {
+                    <tr>
+                        <td class="font-bold w-40">Group</td>
+                        <td>{g()}</td>
+                    </tr>
+                })}
             </tbody>
         </table>
     }
@@ -311,5 +319,136 @@ pub fn AvailableCompetitionsRow(
                 Register
             </CellIconButton>
         </tr>
+    }
+}
+
+#[component]
+pub fn AddParticipantForm(
+    on_participant_added: Callback<Uuid>,
+    on_cancel: Callback<()>,
+) -> impl IntoView {
+    let (error_message, set_error_message) = create_signal(None);
+
+    let (first_name, set_first_name) = create_signal(String::new());
+    let (last_name, set_last_name) = create_signal(String::new());
+    let (gender, set_gender) = create_signal(model::Gender::Female);
+    let (birthday, set_birthday) = create_signal(None);
+    let (group_id, set_group_id) = create_signal(None);
+
+    #[derive(Clone)]
+    struct AddParticipantAction {
+        first_name: String,
+        last_name: String,
+        gender: model::Gender,
+        birthday: chrono::NaiveDate,
+        group_id: Uuid,
+    }
+    let add_participant_action = create_action(|input: &AddParticipantAction| {
+        let input = input.clone();
+        async move {
+            api_client::add_participant(
+                input.first_name,
+                input.last_name,
+                input.gender,
+                input.birthday,
+                input.group_id,
+            )
+            .await
+        }
+    });
+
+    let on_participant_added_handler = move || match add_participant_action.value().get() {
+        Some(Ok(participant_id)) => on_participant_added(participant_id),
+        Some(Err(e)) => set_error_message(Some(e)),
+        None => (),
+    };
+
+    let participant_saving = move || add_participant_action.pending().get();
+
+    let on_submit = move |ev: leptos::ev::SubmitEvent| {
+        ev.prevent_default();
+
+        let Some(birthday) = birthday() else {
+            return;
+        };
+        let Some(group_id) = group_id() else {
+            return;
+        };
+
+        let input = AddParticipantAction {
+            first_name: first_name(),
+            last_name: last_name(),
+            gender: gender(),
+            birthday,
+            group_id,
+        };
+        add_participant_action.dispatch(input);
+    };
+
+    let on_cancel_button_clicked = move |_| {
+        on_cancel(());
+    };
+
+    view! {
+        {on_participant_added_handler}
+
+        <form on:submit=on_submit>
+            <FormItem label="Last Name">
+                <InputName set_name=set_last_name />
+            </FormItem>
+
+            <FormItem label="First Name">
+                <InputName set_name=set_first_name />
+            </FormItem>
+
+            <FormItem label="Gender">
+                <InputGender set_gender />
+            </FormItem>
+
+            <FormItem label="Birthday">
+                <InputDate set_date=set_birthday />
+            </FormItem>
+
+            <FormItem label="Group">
+                <InputGroup set_group_id />
+            </FormItem>
+            {
+                move|| error_message().map(|e| view!{<p class="text text-error">{e}</p>})
+            }
+
+            <div class="form-control w-full max-w-2xl mt-4">
+                <input class="btn btn-primary" type="submit" value="Add Participant" disabled=participant_saving />
+            </div>
+            <div class="form-control w-full max-w-2xl mt-4">
+                <button class="btn btn-neutral" on:click=on_cancel_button_clicked>
+                    Cancel
+                </button>
+            </div>
+        </form>
+    }
+}
+
+#[component]
+pub fn AddParticipantDialog(
+    #[prop(into)] show: RwSignal<bool>,
+    on_participant_added: Callback<Uuid>,
+) -> impl IntoView {
+    let on_added_callback = Callback::new(move |competition_id| {
+        show.set(false);
+        on_participant_added(competition_id);
+    });
+
+    let on_cancel = Callback::new(move |()| show.set(false));
+
+    view! {
+        <dialog class="modal bg-black bg-opacity-30" autofocus open=show>
+            <div class="modal-box">
+                <h3 class="text-xl text-black">Add a Participant</h3>
+                <AddParticipantForm
+                    on_participant_added=on_added_callback
+                    on_cancel
+                />
+            </div>
+        </dialog>
     }
 }

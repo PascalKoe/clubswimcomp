@@ -132,7 +132,13 @@ async fn add_participant(
 ) -> Result<Json<api::AddParticipantResponse>, ApiError> {
     let participant_service = state.participant_service();
     let participant_id = participant_service
-        .add_participant(&p.first_name, &p.last_name, p.gender, p.birthday)
+        .add_participant(
+            &p.first_name,
+            &p.last_name,
+            p.gender,
+            p.birthday,
+            p.group_id,
+        )
         .await?;
 
     Ok(Json(api::AddParticipantResponse { participant_id }))

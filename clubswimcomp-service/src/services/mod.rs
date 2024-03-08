@@ -1,9 +1,11 @@
 mod competition;
+mod group;
 mod participant;
 mod registration;
 mod registration_card;
 
 pub use competition::*;
+pub use group::*;
 pub use participant::*;
 pub use registration::*;
 pub use registration_card::*;

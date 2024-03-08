@@ -16,6 +16,10 @@ $$
 	END;
 $$ LANGUAGE plpgsql;
 
+CREATE TABLE groups (
+	id			UUID			PRIMARY KEY NOT NULL		DEFAULT gen_random_uuid(),
+	name		TEXT			NOT NULL
+);
 
 CREATE TABLE participants (
 	id 			UUID			PRIMARY KEY NOT NULL		DEFAULT gen_random_uuid(),
@@ -23,7 +27,8 @@ CREATE TABLE participants (
 	first_name	TEXT			NOT NULL,
 	last_name	TEXT			NOT NULL,
 	gender		gender			NOT NULL,
-	birthday	DATE			NOT NULL
+	birthday	DATE			NOT NULL,
+	group_id	UUID			NOT NULL					REFERENCES groups(id)
 );
 
 CREATE TABLE competitions (
@@ -47,4 +52,3 @@ CREATE TABLE registration_results (
 	disqualified		BOOL			NOT NULL,
 	time_millis			INT				NOT NULL					CHECK (time_millis > 0)
 );
-

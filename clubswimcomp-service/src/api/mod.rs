@@ -4,12 +4,13 @@ use axum::Router;
 
 use crate::db;
 use crate::services::{
-    CompetitionService, ParticipantService, RegistrationCardService, RegistrationService,
-    ServiceRepositoryError,
+    CompetitionService, GroupService, ParticipantService, RegistrationCardService,
+    RegistrationService, ServiceRepositoryError,
 };
 
 mod competitions;
 mod event;
+mod groups;
 mod participants;
 mod registrations;
 
@@ -74,6 +75,7 @@ pub struct AppState {
     participant_repo: db::participants::Repository,
     registration_repo: db::registrations::Repository,
     competition_repo: db::competitions::Repository,
+    group_repo: db::groups::Repository,
 }
 
 impl AppState {
@@ -82,6 +84,7 @@ impl AppState {
             participant_repo: db::participants::Repository::new(pool.clone()),
             registration_repo: db::registrations::Repository::new(pool.clone()),
             competition_repo: db::competitions::Repository::new(pool.clone()),
+            group_repo: db::groups::Repository::new(pool.clone()),
         }
     }
 
@@ -90,6 +93,7 @@ impl AppState {
             self.participant_repo.clone(),
             self.registration_repo.clone(),
             self.competition_repo.clone(),
+            self.group_repo.clone(),
         )
     }
 
@@ -116,6 +120,15 @@ impl AppState {
             self.competition_repo.clone(),
         )
     }
+
+    pub fn group_service(&self) -> GroupService {
+        GroupService::new(
+            self.participant_repo.clone(),
+            self.registration_repo.clone(),
+            self.competition_repo.clone(),
+            self.group_repo.clone(),
+        )
+    }
 }
 
 pub fn routes() -> Router<AppState> {
@@ -124,4 +137,5 @@ pub fn routes() -> Router<AppState> {
         .nest("/registrations", registrations::router())
         .nest("/competitions", competitions::router())
         .nest("/event", event::router())
+        .nest("/groups", groups::router())
 }

@@ -12,6 +12,7 @@ pub struct Participant {
     pub last_name: String,
     pub gender: Gender,
     pub birthday: NaiveDate,
+    pub group_id: Uuid,
 }
 
 #[derive(Clone)]
@@ -31,7 +32,7 @@ impl Repository {
             r#"
                 SELECT
                     id, short_id, first_name, last_name, gender AS "gender: _",
-                    birthday
+                    birthday, group_id
                 FROM participants;
             "#
         )
@@ -52,7 +53,7 @@ impl Repository {
             r#"
                 SELECT
                     id, short_id, first_name, last_name, gender AS "gender: _",
-                    birthday
+                    birthday, group_id
                 FROM participants
                 WHERE id = $1;
             "#,
@@ -70,19 +71,21 @@ impl Repository {
         last_name: &str,
         gender: Gender,
         birthday: NaiveDate,
+        group_id: Uuid,
     ) -> Result<Uuid> {
         sqlx::query_scalar!(
             r#"
                 INSERT INTO participants (
-                    first_name, last_name, gender, birthday
+                    first_name, last_name, gender, birthday, group_id
                 ) VALUES (
-                    $1, $2, $3, $4
+                    $1, $2, $3, $4, $5
                 ) RETURNING id;
             "#,
             first_name,
             last_name,
             gender as Gender,
-            birthday
+            birthday,
+            group_id,
         )
         .fetch_one(&self.pool)
         .await
@@ -109,5 +112,23 @@ impl Repository {
         .rows_affected();
 
         Ok(rows > 0)
+    }
+
+    /// List participants in the group in the database.
+    pub async fn list_participants_in_group(&self, group_id: Uuid) -> Result<Vec<Participant>> {
+        sqlx::query_as!(
+            Participant,
+            r#"
+                SELECT
+                    id, short_id, first_name, last_name, gender AS "gender: _",
+                    birthday, group_id
+                FROM participants
+                WHERE group_id = $1;
+            "#,
+            group_id
+        )
+        .fetch_all(&self.pool)
+        .await
+        .context("Failed to fetch list of participants in group from database")
     }
 }

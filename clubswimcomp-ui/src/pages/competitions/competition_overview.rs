@@ -24,17 +24,18 @@ pub fn CompetitionOverview() -> impl IntoView {
                 subtitle="An overview about every single competition that exists for this event.".to_string().into()
             />
             <AddCompetitionDialog on_competition_added=competition_added show=add_competition_dialog_open/>
+            <ActionRow>
+                <button class="btn btn-sm btn-primary rounded-full" on:click=add_competition_click>
+                    <phosphor_leptos::Plus />
+                    Add a new competition
+                </button>
+            </ActionRow>
+            
+            <SectionTitle title="Competitions" subtitle="List of all competitions.".to_string().into() />
             <Transition fallback=|| view!{<span class="loading loading-spinner loading-lg"></span>}>
                 {
                     move || competitions.get().map(|c|
                         view! {
-                            <div class="mb-8">
-                                <button class="btn btn-sm btn-primary rounded-full" on:click=add_competition_click>
-                                    <phosphor_leptos::Plus />
-                                    Add a new competition
-                                </button>
-                            </div>
-                            <SectionTitle title="Competitions" subtitle="List of all competitions.".to_string().into() />
                             <CompetitionOverviewTable competitions=c />
                         }
                     )

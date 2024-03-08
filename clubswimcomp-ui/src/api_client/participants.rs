@@ -31,12 +31,14 @@ pub async fn add_participant(
     last_name: String,
     gender: model::Gender,
     birthday: NaiveDate,
+    group_id: Uuid,
 ) -> Result<Uuid> {
     let request = api::AddParticipantBody {
         first_name,
         last_name,
         gender,
         birthday,
+        group_id,
     };
 
     let response = Request::post(&format!("{BASE_URL}/participants"))
@@ -106,7 +108,10 @@ pub async fn register_for_competition(participant_id: Uuid, competition_id: Uuid
     Ok(response.registration_id)
 }
 
-pub async fn unregister_from_competition(participant_id: Uuid, registration_id: Uuid) -> Result<()> {
+pub async fn unregister_from_competition(
+    participant_id: Uuid,
+    registration_id: Uuid,
+) -> Result<()> {
     let response = Request::delete(&format!(
         "{BASE_URL}/participants/{participant_id}/registrations/{registration_id}"
     ))

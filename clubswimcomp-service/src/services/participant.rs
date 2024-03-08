@@ -13,6 +13,7 @@ pub struct ParticipantService {
     participant_repo: db::participants::Repository,
     registration_repo: db::registrations::Repository,
     competition_repo: db::competitions::Repository,
+    group_repo: db::groups::Repository,
 }
 
 #[derive(Debug, Error)]
@@ -77,11 +78,13 @@ impl ParticipantService {
         participant_repo: db::participants::Repository,
         registration_repo: db::registrations::Repository,
         competition_repo: db::competitions::Repository,
+        group_repo: db::groups::Repository,
     ) -> Self {
         Self {
             participant_repo,
             registration_repo,
             competition_repo,
+            group_repo,
         }
     }
 
@@ -108,9 +111,10 @@ impl ParticipantService {
         last_name: &str,
         gender: model::Gender,
         birthday: NaiveDate,
+        group_id: Uuid,
     ) -> Result<Uuid, ServiceRepositoryError> {
         self.participant_repo
-            .create_participant(first_name, last_name, gender.into(), birthday)
+            .create_participant(first_name, last_name, gender.into(), birthday, group_id)
             .await
             .context("Failed to add participant to repository")
             .map_err(ServiceRepositoryError::from)
@@ -175,8 +179,18 @@ impl ParticipantService {
             registrations.push(registration);
         }
 
+        tracing::debug!("Loading participants group");
+        let group = self
+            .group_repo
+            .group_by_id(participant.group_id)
+            .await
+            .context("Failed to fetch group of participant from repository")?
+            .map(model::Group::from)
+            .context("Group is referenced in participant but could not be found in repository")?;
+
         Ok(model::ParticipantDetails {
             participant,
+            group,
             registrations,
         })
     }
@@ -347,6 +361,7 @@ impl ParticipantService {
     ///
     /// # Parameters:
     /// - `registration_id` - The id of the registration
+    #[instrument(skip(self))]
     pub async fn unregister_from_competition(
         &self,
         registration_id: Uuid,

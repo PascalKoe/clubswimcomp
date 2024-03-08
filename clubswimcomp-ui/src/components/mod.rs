@@ -4,6 +4,7 @@ use leptos_router::*;
 
 mod competition;
 mod event;
+mod group;
 mod page;
 mod participant;
 mod registrations;
@@ -11,10 +12,14 @@ mod scanner;
 
 pub use competition::*;
 pub use event::*;
+pub use group::*;
 pub use page::*;
 pub use participant::*;
 pub use registrations::*;
 pub use scanner::*;
+use uuid::Uuid;
+
+use crate::api_client;
 
 #[component]
 pub fn GenderDisplay(
@@ -398,5 +403,83 @@ pub fn InputStroke(#[prop(into)] set_stroke: WriteSignal<model::Stroke>) -> impl
             <option value="Breast">Breast</option>
             <option value="Freestyle">Freestyle</option>
         </select>
+    }
+}
+
+#[component]
+pub fn InputName(#[prop(into)] set_name: WriteSignal<String>) -> impl IntoView {
+    let input_changed = move |ev| {
+        let name = event_target_value(&ev);
+        set_name(name);
+    };
+
+    view! {
+        <input type="text" class="input input-bordered" on:change=input_changed required />
+    }
+}
+
+#[component]
+pub fn InputDate(#[prop(into)] set_date: WriteSignal<Option<chrono::NaiveDate>>) -> impl IntoView {
+    let input_changed = move |ev| {
+        let date = event_target_value(&ev);
+        let date = chrono::NaiveDate::parse_from_str(&date, "%Y-%m-%d").ok();
+        set_date(date);
+    };
+
+    view! {
+        <input class="input input-bordered" type="date" on:change=input_changed required/>
+    }
+}
+
+#[component]
+pub fn InputGroup(#[prop(into)] set_group_id: WriteSignal<Option<Uuid>>) -> impl IntoView {
+    let input_changed = move |ev| {
+        let value = event_target_value(&ev);
+        let group_id = Uuid::parse_str(&value).ok();
+        set_group_id(group_id);
+    };
+
+    let available_groups = create_resource(
+        || (),
+        |_| async move { api_client::list_groups().await.unwrap() },
+    );
+
+    view! {
+        <select class="input input-bordered" on:change=input_changed>
+            <Transition>
+                <For each=move || available_groups().unwrap_or_default() key=|g| g.id let:group>
+                    <option value={group.id.to_string()}>{group.name}</option>
+                </For>
+            </Transition>
+        </select>
+    }
+}
+
+#[component]
+pub fn CellDate(date: chrono::NaiveDate) -> impl IntoView {
+    view! {
+        <td><BirthdayDisplay birthday=date /></td>
+    }
+}
+
+#[component]
+pub fn HeadingsParticipant() -> impl IntoView {
+    view! {
+        <th>Code</th>
+        <th>Last Name</th>
+        <th>First Name</th>
+        <th>Gender</th>
+        <th>Birthday</th>
+    }
+}
+
+#[component]
+pub fn CellsParticipant(participant: model::Participant) -> impl IntoView {
+    view! {
+        <td>{participant.short_code}</td>
+        <td>{participant.last_name}</td>
+        <td>{participant.first_name}</td>
+        <CellGender gender=participant.gender />
+        <CellDate date=participant.birthday />
     }
 }

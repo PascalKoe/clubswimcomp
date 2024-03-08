@@ -23,6 +23,9 @@ pub fn drawer() -> impl IntoView {
                 <li>
                     <A active_class="active" href="/registrations/ingest">Ingest</A>
                 </li>
+                <li>
+                    <A active_class="active" href="/groups">Groups</A>
+                </li>
             </ul>
         </div>
     }

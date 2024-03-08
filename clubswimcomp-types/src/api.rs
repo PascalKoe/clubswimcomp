@@ -10,6 +10,7 @@ pub struct AddParticipantBody {
     pub last_name: String,
     pub gender: model::Gender,
     pub birthday: NaiveDate,
+    pub group_id: Uuid,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -54,4 +55,14 @@ pub struct DeleteCompetitionParams {
 pub struct EnterResultBody {
     pub disqualified: bool,
     pub time_millis: u32,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+pub struct AddGroupRequest {
+    pub name: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+pub struct AddGroupResponse {
+    pub group_id: Uuid,
 }

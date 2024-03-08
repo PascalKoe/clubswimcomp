@@ -53,6 +53,7 @@ impl From<db::participants::Participant> for Participant {
             gender: p.gender.into(),
             birthday: p.birthday,
             age: age_from_birthday(p.birthday),
+            group_id: p.group_id,
         }
     }
 }
@@ -86,6 +87,15 @@ impl From<db::registrations::RegistrationResult> for RegistrationResult {
             disqualified: r.disqualified,
             time_millis: r.time_millis,
             fina_points: r.fina_points as _,
+        }
+    }
+}
+
+impl From<db::groups::Group> for Group {
+    fn from(g: db::groups::Group) -> Self {
+        Self {
+            id: g.id,
+            name: g.name,
         }
     }
 }

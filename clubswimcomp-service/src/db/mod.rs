@@ -1,6 +1,7 @@
 pub mod competitions;
 pub mod participants;
 pub mod registrations;
+pub mod groups;
 
 pub type Database = sqlx::Postgres;
 pub type DatabasePool = sqlx::Pool<Database>;

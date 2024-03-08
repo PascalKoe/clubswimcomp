@@ -162,3 +162,13 @@ pub fn ResultInfoTable(registration_result: model::RegistrationResult) -> impl I
         </table>
     }
 }
+
+#[component]
+pub fn RegistrationDetailsRow(registration_details: model::RegistrationDetails) -> impl IntoView {
+    view! {
+        <tr>
+            <td>{registration_details.participant.first_name}</td>
+            <td>{registration_details.participant.last_name}</td>
+        </tr>
+    }
+}
