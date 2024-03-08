@@ -52,8 +52,10 @@ pub fn ParticipantOverview(
     view! {
         <Table>
             <thead>
-                <columns::ParticipantHeadings />
-                <th></th>
+                <tr>
+                    <columns::ParticipantHeadings />
+                    <th></th>
+                </tr>
             </thead>
             <tbody>
                 <For each=participants key=|p| p.id let:participant>
@@ -84,8 +86,10 @@ pub fn CompetitionOverview(
     view! {
         <Table>
             <thead>
-                <columns::CompetitionHeadings />
-                <th></th>
+                <tr>
+                    <columns::CompetitionHeadings />
+                    <th></th>
+                </tr>
             </thead>
             <tbody>
                 <For each=competitions key=|c| c.id let:competition>
@@ -114,8 +118,10 @@ pub fn GroupOverview(#[prop(into)] groups: MaybeSignal<Vec<model::Group>>) -> im
     view! {
         <Table>
             <thead>
-                <columns::GroupHeadings />
-                <th></th>
+                <tr>
+                    <columns::GroupHeadings />
+                    <th></th>
+                </tr>
             </thead>
             <tbody>
                 <For each=groups key=|g| g.id let:group>
@@ -146,9 +152,11 @@ pub fn RegistrationDetails(
     view! {
         <Table>
             <thead>
-                <th></th>
-                <columns::ParticipantHeadings />
-                <columns::CompetitionHeadings />
+                <tr>
+                    <th></th>
+                    <columns::ParticipantHeadings />
+                    <columns::CompetitionHeadings />
+                </tr>
             </thead>
             <tbody>
                 <For each=registration_details key=|r| r.id let:registration_details>
@@ -180,9 +188,11 @@ pub fn GroupScores(
     view! {
         <Table>
             <thead>
-                <th></th>
-                <columns::ParticipantHeadings />
-                <columns::GroupScoreHeadings />
+                <tr>
+                    <th></th>
+                    <columns::ParticipantHeadings />
+                    <columns::GroupScoreHeadings />
+                </tr>
             </thead>
             <tbody>
                 <For each=group_scores key=|g| g.participant.id let:group_score>
