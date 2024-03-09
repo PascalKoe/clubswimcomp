@@ -45,19 +45,26 @@ pub fn CompetitionDetails() -> impl IntoView {
                 subtitle="Details about a specific competition with all of it's registrations.".to_string().into()
             />
             { move || error_msg().map(|e| view! {<p class="text-error">{e}</p>}) }
+            <ActionRow>
+                <A class="btn btn-sm btn-primary rounded-full mr-4" href={format!("/competitions/{}/scoreboard", competition_id())}>
+                    <phosphor_leptos::Table />
+                    Scoreboard
+                </A>
+                <button
+                    class="btn btn-sm btn-error rounded-full mr-4"
+                    on:click=move |_| delete_competition_action.dispatch(competition_id())
+                    disabled=move || !can_be_deleted()
+                >
+                    <phosphor_leptos::Trash />
+                    Delete Competition
+                </button>
+            </ActionRow>
             <Transition fallback=|| view!{<span class="loading loading-spinner loading-lg"></span>}>
                 {
                     move || competition_details.get().map(|cd|
                         view! {
                             <div class="mb-8">
-                                <button
-                                    class="btn btn-sm btn-error rounded-full"
-                                    on:click=move |_| delete_competition_action.dispatch(competition_id())
-                                    disabled=move || !can_be_deleted()
-                                >
-                                    <phosphor_leptos::Trash />
-                                    Delete Competition
-                                </button>
+
                         </div>
                             <data::CompetitionInfo competition=cd.competition />
 

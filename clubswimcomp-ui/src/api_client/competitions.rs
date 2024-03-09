@@ -68,3 +68,18 @@ pub async fn delete_competition(competition_id: Uuid, force_delete: bool) -> Res
 
     Ok(())
 }
+
+pub async fn competition_scoreboard(competition_id: Uuid) -> Result<model::CompetitionScoreboard> {
+    let response = Request::get(&format!(
+        "{BASE_URL}/competitions/{competition_id}/scoreboard"
+    ))
+    .send()
+    .await
+    .unwrap();
+
+    if !response.ok() {
+        return Err(response.text().await.unwrap());
+    }
+
+    Ok(response.json().await.unwrap())
+}

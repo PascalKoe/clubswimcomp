@@ -2,6 +2,8 @@ use clubswimcomp_types::model;
 use leptos::*;
 use leptos_router::*;
 
+use crate::components::values;
+
 use super::ActionType;
 
 pub mod cells;
@@ -213,6 +215,144 @@ pub fn GroupScoreRow(group_score: model::GroupScore) -> impl IntoView {
             </cells::Link>
             <columns::Participant participant=group_score.participant.clone() />
             <columns::GroupScore group_score=group_score/>
+        </tr>
+    }
+}
+
+#[component]
+pub fn CompetitionScores(scores: Vec<model::CompetitionScore>) -> impl IntoView {
+    let (mut top_scores, mut scores): (Vec<_>, Vec<_>) =
+        scores.into_iter().partition(|s| s.rank <= 3);
+    top_scores.sort_by_key(|s| s.rank);
+    scores.sort_by(|x, y| x.participant.last_name.cmp(&y.participant.last_name));
+
+    view! {
+        <Table>
+            <thead>
+                <tr>
+                    <th>Last Name</th>
+                    <th>First Name</th>
+                    <th>Age</th>
+                    <th>FINA Points</th>
+                    <th>Time</th>
+                    <th>Rank</th>
+                </tr>
+            </thead>
+            <tbody>
+                <For each=move || top_scores.clone() key=|s| s.participant.id let:cs>
+                    <CompetitionScoresRow competition_score=cs show_rank=true />
+                </For>
+
+                <tr class="h-8">
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+
+                <For each=move || scores.clone() key=|s| s.participant.id let:cs>
+                    <CompetitionScoresRow competition_score=cs show_rank=false />
+                </For>
+            </tbody>
+        </Table>
+    }
+}
+
+#[component]
+pub fn CompetitionScoresRow(
+    competition_score: model::CompetitionScore,
+    show_rank: bool,
+) -> impl IntoView {
+    view! {
+        <tr>
+            <td>{competition_score.participant.last_name}</td>
+            <td>{competition_score.participant.first_name}</td>
+            <td>{competition_score.participant.age}</td>
+            <td><values::FinaPoints fina_points=competition_score.fina_points /></td>
+            <td><values::Time millis=competition_score.time /></td>
+            <td>
+                {
+                    if show_rank {
+                        competition_score.rank.to_string()
+                    } else {
+                        "".to_string()
+                    }
+                }
+            </td>
+        </tr>
+    }
+}
+
+#[component]
+pub fn CompetitionDisqualifications(
+    mut disqualifications: Vec<model::CompetitionRegistration>,
+) -> impl IntoView {
+    disqualifications.sort_by(|x, y| x.participant.last_name.cmp(&y.participant.last_name));
+
+    view! {
+        <Table>
+            <thead>
+                <tr>
+                    <th>Last Name</th>
+                    <th>First Name</th>
+                    <th>Age</th>
+                </tr>
+            </thead>
+            <tbody>
+                <For each=move || disqualifications.clone() key=|d| d.participant.id let:d>
+                    <CompetitionDisqualificationsRow disqualification=d />
+                </For>
+            </tbody>
+        </Table>
+    }
+}
+
+#[component]
+pub fn CompetitionDisqualificationsRow(
+    disqualification: model::CompetitionRegistration,
+) -> impl IntoView {
+    view! {
+        <tr>
+            <td>{disqualification.participant.last_name}</td>
+            <td>{disqualification.participant.first_name}</td>
+            <td>{disqualification.participant.age}</td>
+        </tr>
+    }
+}
+
+#[component]
+pub fn CompetitionMissingResults(
+    mut missing: Vec<model::CompetitionRegistration>,
+) -> impl IntoView {
+    missing.sort_by(|x, y| x.participant.last_name.cmp(&y.participant.last_name));
+
+    view! {
+        <Table>
+            <thead>
+                <tr>
+                    <th>Last Name</th>
+                    <th>First Name</th>
+                    <th>Age</th>
+                </tr>
+            </thead>
+            <tbody>
+                <For each=move || missing.clone() key=|m| m.participant.id let:m>
+                    <CompetitionMissingResultsRow missing=m />
+                </For>
+            </tbody>
+        </Table>
+    }
+}
+
+#[component]
+pub fn CompetitionMissingResultsRow(missing: model::CompetitionRegistration) -> impl IntoView {
+    view! {
+        <tr>
+            <td>{missing.participant.last_name}</td>
+            <td>{missing.participant.first_name}</td>
+            <td>{missing.participant.age}</td>
         </tr>
     }
 }

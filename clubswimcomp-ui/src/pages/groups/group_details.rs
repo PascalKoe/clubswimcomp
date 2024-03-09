@@ -36,17 +36,6 @@ pub fn GroupDetails() -> impl IntoView {
                 </button>
             </ActionRow>
 
-            <SectionTitle title="Registrations without Result" subtitle="Registrations with missing Result and are therefor counted as 0 FINA points.".to_string().into() />
-            <Transition fallback=|| view!{<span class="loading loading-spinner loading-lg"></span>}>
-                {
-                    move || group_details.get().map(|g|
-                        view! {
-                            <tables::RegistrationDetails registration_details=g.registration_results_missing />
-                        }
-                    )
-                }
-            </Transition>
-
             <SectionTitle title="Scoreboard" />
             <Transition fallback=|| view!{<span class="loading loading-spinner loading-lg"></span>}>
                 {
