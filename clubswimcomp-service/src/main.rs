@@ -9,8 +9,14 @@ mod db;
 mod infra;
 mod services;
 
+pub struct Config {
+    pub typst_bin: String,
+    pub typst_assets: String,
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    dotenv::dotenv().ok();
     tracing_subscriber::fmt::init();
 
     let pool = sqlx::postgres::PgPoolOptions::new()
@@ -19,7 +25,13 @@ async fn main() -> anyhow::Result<()> {
         .await
         .context("Failed to create database connection pool")?;
 
-    let app_state = AppState::new(pool);
+    let config = Config {
+        typst_bin: std::env::var("CLUBSWIMCOMP_TYPST_BIN")
+            .expect("Missing 'CLUBSWIMCOMP_TYPST_BIN'"),
+        typst_assets: std::env::var("CLUBSWIMCOMP_TYPST_ASSETS")
+            .expect("Missing 'CLUBSWIMCOMP_TYPST_ASSETS'"),
+    };
+    let app_state = AppState::new(config, pool);
 
     let app = Router::new()
         .nest("/", api::routes())

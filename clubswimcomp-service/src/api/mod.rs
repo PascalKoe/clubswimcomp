@@ -2,11 +2,12 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Router;
 
-use crate::db;
+use crate::infra::typst_compiler::TypstCompiler;
 use crate::services::{
     CompetitionService, GroupService, ParticipantService, RegistrationCardService,
     RegistrationService, ScoreService, ServiceRepositoryError,
 };
+use crate::{db, infra, Config};
 
 mod competitions;
 mod event;
@@ -76,15 +77,21 @@ pub struct AppState {
     registration_repo: db::registrations::Repository,
     competition_repo: db::competitions::Repository,
     group_repo: db::groups::Repository,
+
+    typst_compiler: infra::typst_compiler::TypstCompiler,
 }
 
 impl AppState {
-    pub fn new(pool: db::DatabasePool) -> Self {
+    pub fn new(config: Config, pool: db::DatabasePool) -> Self {
+        let typst_compiler = TypstCompiler::new(config.typst_bin, config.typst_assets);
+
         Self {
             participant_repo: db::participants::Repository::new(pool.clone()),
             registration_repo: db::registrations::Repository::new(pool.clone()),
             competition_repo: db::competitions::Repository::new(pool.clone()),
             group_repo: db::groups::Repository::new(pool.clone()),
+
+            typst_compiler,
         }
     }
 
@@ -102,6 +109,7 @@ impl AppState {
             self.participant_repo.clone(),
             self.registration_repo.clone(),
             self.competition_repo.clone(),
+            self.typst_compiler.clone(),
         )
     }
 
@@ -127,6 +135,7 @@ impl AppState {
             self.registration_repo.clone(),
             self.competition_repo.clone(),
             self.group_repo.clone(),
+            self.typst_compiler.clone(),
         )
     }
 
@@ -136,6 +145,7 @@ impl AppState {
             self.registration_repo.clone(),
             self.competition_repo.clone(),
             self.group_repo.clone(),
+            self.typst_compiler.clone(),
         )
     }
 }

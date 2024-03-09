@@ -9,9 +9,9 @@ use tracing::instrument;
 use uuid::Uuid;
 
 use crate::services::{
-    AvailableCompetitionsForRegistrationError, ParticipantDetailsError,
-    ParticipantRegistrationCardsError, ParticipantScoreboardError, RegisterForCompetitionsError,
-    RemoveParticipantError, UnregisterFromCompetitionError,
+    AvailableCompetitionsForRegistrationError, ParticipantCertificateError,
+    ParticipantDetailsError, ParticipantRegistrationCardsError, ParticipantScoreboardError,
+    RegisterForCompetitionsError, RemoveParticipantError, UnregisterFromCompetitionError,
 };
 
 use super::{ApiError, AppState};
@@ -23,6 +23,7 @@ pub fn router() -> Router<AppState> {
         .route("/:participant_id", get(participant_details))
         .route("/:participant_id", delete(remove_participant))
         .route("/:participant_id/scoreboard", get(participant_scoreboard))
+        .route("/:participant_id/certificate", get(participant_certificate))
         .route(
             "/:participant_id/registrations/available-competitions",
             get(available_competitions_for_registration),
@@ -113,6 +114,16 @@ impl From<&ParticipantScoreboardError> for StatusCode {
     }
 }
 
+impl From<&ParticipantCertificateError> for StatusCode {
+    fn from(err: &ParticipantCertificateError) -> Self {
+        match err {
+            ParticipantCertificateError::ParticipantDoesNotExist => Self::NOT_FOUND,
+            ParticipantCertificateError::PdfGenerationFailed(_) => Self::INTERNAL_SERVER_ERROR,
+            ParticipantCertificateError::RepositoryError(_) => Self::INTERNAL_SERVER_ERROR,
+        }
+    }
+}
+
 #[instrument(skip(state))]
 async fn list_participants(
     State(state): State<AppState>,
@@ -176,6 +187,30 @@ async fn participant_scoreboard(
     let scoreboard = score_service.participant_scoreboard(participant_id).await?;
 
     Ok(Json(scoreboard))
+}
+
+#[instrument(skip(state))]
+async fn participant_certificate(
+    Path(participant_id): Path<Uuid>,
+    State(state): State<AppState>,
+) -> Result<(HeaderMap, Vec<u8>), ApiError> {
+    let score_service = state.score_service();
+    let certificate = score_service
+        .participant_certificate(participant_id)
+        .await?;
+
+    let file_name = format!("{participant_id}-certificate.pdf");
+
+    let mut headers = HeaderMap::new();
+    headers.append(header::CONTENT_TYPE, "application/pdf".parse().unwrap());
+    headers.append(
+        header::CONTENT_DISPOSITION,
+        format!("attachment; filename=\"{file_name}\"")
+            .parse()
+            .unwrap(),
+    );
+
+    Ok((headers, certificate))
 }
 
 #[instrument(skip(state))]

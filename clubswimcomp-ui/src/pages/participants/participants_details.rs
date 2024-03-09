@@ -71,11 +71,16 @@ pub fn ParticipantDetails() -> impl IntoView {
                     // FIXME: Participant Start Card Link
                     move || participant_details.get().map(|pd| {
                         let start_card_link = format!("http://localhost:3000/participants/{}/registrations/cards", pd.participant.id);
+                        let certificate_link = format!("http://localhost:3000/participants/{}/certificate", pd.participant.id);
                         view! {
                             <ActionRow>
                                 <A target="about:blank" href=start_card_link class="btn btn-sm btn-primary rounded-full mr-4">
                                     <phosphor_leptos::Printer />
                                     Print Registration Cards
+                                </A>
+                                <A target="about:blank" href=certificate_link class="btn btn-sm btn-primary rounded-full mr-4">
+                                    <phosphor_leptos::Printer />
+                                    Print Certificate
                                 </A>
                                 <button
                                     class="btn btn-sm btn-error rounded-full"

@@ -11,6 +11,7 @@ pub struct RegistrationCardService {
     participant_repo: db::participants::Repository,
     registration_repo: db::registrations::Repository,
     competition_repo: db::competitions::Repository,
+    typst_compiler: infra::typst_compiler::TypstCompiler,
 }
 
 #[derive(Debug, Error)]
@@ -51,11 +52,13 @@ impl RegistrationCardService {
         participant_repo: db::participants::Repository,
         registration_repo: db::registrations::Repository,
         competition_repo: db::competitions::Repository,
+        typst_compiler: infra::typst_compiler::TypstCompiler,
     ) -> Self {
         Self {
             participant_repo,
             registration_repo,
             competition_repo,
+            typst_compiler,
         }
     }
 
@@ -69,7 +72,7 @@ impl RegistrationCardService {
             organization: "TEST ORGANIZATION".to_string(),
             cards,
         }
-        .generate_pdf()
+        .generate_pdf(&self.typst_compiler)
         .await
         .context("Failed to generate PDF for registration cards")
     }
@@ -151,7 +154,7 @@ impl RegistrationCardService {
                     .context("Failed to load competition for registration from repository")?
                     .map(model::Competition::from)
                     .context("Competition is referenced in registration but could not be found in repository")?;
-                
+
             let qr_code = QrCode::new(db_registration.id.to_string().as_bytes()).unwrap();
             let qr_code = qr_code.render::<svg::Color>().build();
 

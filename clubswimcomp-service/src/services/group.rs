@@ -7,7 +7,7 @@ use tracing::instrument;
 use uuid::Uuid;
 
 use crate::{
-    db,
+    db, infra,
     services::{score::ScoreService, ParticipantService},
 };
 
@@ -18,6 +18,7 @@ pub struct GroupService {
     registration_repo: db::registrations::Repository,
     competition_repo: db::competitions::Repository,
     group_repo: db::groups::Repository,
+    typst_compiler: infra::typst_compiler::TypstCompiler,
 }
 
 #[derive(Debug, Error)]
@@ -35,12 +36,14 @@ impl GroupService {
         registration_repo: db::registrations::Repository,
         competition_repo: db::competitions::Repository,
         group_repo: db::groups::Repository,
+        typst_compiler: infra::typst_compiler::TypstCompiler,
     ) -> Self {
         Self {
             participant_repo,
             registration_repo,
             competition_repo,
             group_repo,
+            typst_compiler,
         }
     }
 
@@ -75,6 +78,7 @@ impl GroupService {
             self.registration_repo.clone(),
             self.competition_repo.clone(),
             self.group_repo.clone(),
+            self.typst_compiler.clone(),
         );
 
         tracing::debug!("Ensuring group actually exists");

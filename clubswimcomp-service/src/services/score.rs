@@ -1,20 +1,22 @@
 use std::collections::HashMap;
 
 use anyhow::{Context, Result};
+use chrono::Datelike;
 use clubswimcomp_types::model;
 use thiserror::Error;
 use tracing::instrument;
 use uuid::Uuid;
 
-use crate::{db, services::ParticipantService};
+use crate::{db, infra, services::ParticipantService};
 
-use super::{CompetitionDetailsError, CompetitionService, ServiceRepositoryError};
+use super::{CompetitionService, ServiceRepositoryError};
 
 pub struct ScoreService {
     participant_repo: db::participants::Repository,
     registration_repo: db::registrations::Repository,
     competition_repo: db::competitions::Repository,
     group_repo: db::groups::Repository,
+    typst_compiler: infra::typst_compiler::TypstCompiler,
 }
 
 #[derive(Debug, Error)]
@@ -39,6 +41,18 @@ pub enum CompetitionScoreboardError {
 pub enum ParticipantScoreboardError {
     #[error("The participant does not exist")]
     ParticipantDoesNotExist,
+
+    #[error("The repository ran into an error: {0:#?}")]
+    RepositoryError(#[from] anyhow::Error),
+}
+
+#[derive(Debug, Error)]
+pub enum ParticipantCertificateError {
+    #[error("The participant does not exist")]
+    ParticipantDoesNotExist,
+
+    #[error("The participant does not exist")]
+    PdfGenerationFailed(anyhow::Error),
 
     #[error("The repository ran into an error: {0:#?}")]
     RepositoryError(#[from] anyhow::Error),
@@ -73,18 +87,30 @@ impl From<super::participant::ParticipantDetailsError> for ParticipantScoreboard
     }
 }
 
+impl From<ParticipantScoreboardError> for ParticipantCertificateError {
+    fn from(err: ParticipantScoreboardError) -> Self {
+        use ParticipantScoreboardError::*;
+        match err {
+            ParticipantDoesNotExist => Self::ParticipantDoesNotExist,
+            RepositoryError(e) => Self::RepositoryError(e),
+        }
+    }
+}
+
 impl ScoreService {
     pub fn new(
         participant_repo: db::participants::Repository,
         registration_repo: db::registrations::Repository,
         competition_repo: db::competitions::Repository,
         group_repo: db::groups::Repository,
+        typst_compiler: infra::typst_compiler::TypstCompiler,
     ) -> Self {
         Self {
             participant_repo,
             registration_repo,
             competition_repo,
             group_repo,
+            typst_compiler,
         }
     }
 
@@ -312,6 +338,41 @@ impl ScoreService {
             disqualifications,
             missing_results,
         })
+    }
+
+    #[instrument(skip(self))]
+    pub async fn participant_certificate(
+        &self,
+        participant_id: Uuid,
+    ) -> Result<Vec<u8>, ParticipantCertificateError> {
+        let participant_scoreboard = self.participant_scoreboard(participant_id).await?;
+
+        let results = participant_scoreboard
+            .competition_scores
+            .into_iter()
+            .map(|cs| infra::certificate::CompetitionResult {
+                distance: cs.competition.distance,
+                stroke: cs.competition.stroke.into(),
+                millis: cs.time,
+                rank: cs.rank,
+            })
+            .collect();
+
+        let certificate = infra::certificate::Certificate {
+            first_name: participant_scoreboard.participant.first_name,
+            last_name: participant_scoreboard.participant.last_name,
+            birthyear: participant_scoreboard.participant.birthday.year() as _,
+            group_points: participant_scoreboard.group_score.fina_points,
+            group_rank: participant_scoreboard.group_score.rank,
+            results,
+        };
+
+        let pdf = infra::certificate::Certificates(vec![certificate])
+            .generate_pdf(&self.typst_compiler)
+            .await
+            .map_err(ParticipantCertificateError::PdfGenerationFailed)?;
+
+        Ok(pdf)
     }
 
     #[instrument(skip(self))]

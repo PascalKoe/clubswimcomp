@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::infra;
 
+use super::typst_compiler::TypstCompiler;
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RegistrationCards {
     pub event_name: String,
@@ -58,18 +60,16 @@ impl From<model::Gender> for Gender {
 }
 
 impl RegistrationCards {
-    pub async fn generate_pdf(&self) -> anyhow::Result<Vec<u8>> {
+    pub async fn generate_pdf(&self, typst_compiler: &TypstCompiler) -> anyhow::Result<Vec<u8>> {
         let input_data = serde_json::to_string(self)
             .context("Invalid registration card, serialization failed")?;
 
-        let template = include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/assets/registration_card.typst"
-        ));
+        let template = "registration_card.typst";
         let inputs = [("registration_cards".to_string(), input_data)]
             .into_iter()
             .collect();
-        infra::typst_compiler::compile(template, infra::typst_compiler::TypstOutput::Pdf, &inputs)
+        typst_compiler
+            .compile(template, infra::typst_compiler::TypstOutput::Pdf, &inputs)
             .await
             .context("Failed to compile typst registration cards")
     }
