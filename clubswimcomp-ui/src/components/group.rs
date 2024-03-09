@@ -33,7 +33,7 @@ pub fn AddGroupForm(on_group_added: Callback<Uuid>, on_cancel: Callback<()>) -> 
         add_group_action.dispatch(input);
     };
 
-    let on_cancel_button_clicked = move |_| {
+    let on_cancel_button_clicked = move |ev: ev::MouseEvent| {
         on_cancel(());
     };
 
@@ -51,12 +51,12 @@ pub fn AddGroupForm(on_group_added: Callback<Uuid>, on_cancel: Callback<()>) -> 
             <div class="form-control w-full max-w-2xl mt-4">
                 <input class="btn btn-primary" type="submit" value="Add Group" disabled=group_saving />
             </div>
-            <div class="form-control w-full max-w-2xl mt-4">
-                <button class="btn btn-neutral" on:click=on_cancel_button_clicked>
-                    Cancel
-                </button>
-            </div>
         </form>
+        <div class="form-control w-full max-w-2xl mt-4">
+            <button class="btn btn-neutral" on:click=on_cancel_button_clicked>
+                Cancel
+            </button>
+        </div>
     }
 }
 

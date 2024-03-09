@@ -8,7 +8,7 @@ pub enum Gender {
     Male,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, PartialOrd, Ord)]
 pub enum Stroke {
     Butterfly,
     Back,
@@ -34,6 +34,28 @@ pub struct ParticipantDetails {
     pub participant: Participant,
     pub group: Group,
     pub registrations: Vec<ParticipantRegistration>,
+}
+
+impl ParticipantDetails {
+    /// The total number of FINA points, the participant has achieved.
+    ///
+    /// Registrations, that do not have a result yet, are ignored. Results that
+    /// are classified as disqualified are counted as 0 FINA points.
+    pub fn fina_points(&self) -> u32 {
+        self.registrations
+            .iter()
+            .filter(|r| r.result.is_some())
+            .map(|r| {
+                let result = r.result.as_ref().unwrap();
+                !result.disqualified as u32 * result.fina_points
+            })
+            .sum()
+    }
+
+    /// Checks of any registration does not have a result yet.
+    pub fn results_missing(&self) -> bool {
+        self.registrations.iter().any(|r| r.result.is_none())
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -83,23 +105,6 @@ pub struct RegistrationResult {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
-pub struct CompetitionScoreboard {
-    #[serde(flatten)]
-    pub competition: Competition,
-    pub scores: Vec<CompetitionScore>,
-    pub disqualifications: Vec<CompetitionRegistration>,
-    pub missing_results: Vec<CompetitionRegistration>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
-pub struct CompetitionScore {
-    #[serde(flatten)]
-    pub participant: Participant,
-    pub result: RegistrationResult,
-    pub rank: u32,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct Group {
     pub id: Uuid,
     pub name: String,
@@ -109,14 +114,62 @@ pub struct Group {
 pub struct GroupDetails {
     #[serde(flatten)]
     pub group: Group,
-    pub registration_results_missing: Vec<RegistrationDetails>,
     pub scores: Vec<GroupScore>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
-pub struct GroupScore {
+pub struct CompetitionScore {
     #[serde(flatten)]
+    pub participant: Participant,
+    pub time: u32,
+    pub fina_points: u32,
+    pub rank: u32,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+pub struct CompetitionScoreboard {
+    pub competition: Competition,
+    pub scores: Vec<CompetitionScore>,
+    pub disqualifications: Vec<CompetitionRegistration>,
+    pub missing_results: Vec<CompetitionRegistration>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+pub struct ParticipantGroupScore {
+    pub group: Group,
+    pub fina_points: u32,
+    pub rank: u32,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+pub struct ParticipantCompetitionScore {
+    #[serde(flatten)]
+    pub competition: Competition,
+    pub time: u32,
+    pub fina_points: u32,
+    pub rank: u32,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+pub struct ParticipantScoreboard {
+    #[serde(flatten)]
+    pub participant: Participant,
+    pub group_score: ParticipantGroupScore,
+    pub competition_scores: Vec<ParticipantCompetitionScore>,
+    pub disqualifications: Vec<ParticipantRegistration>,
+    pub missing_results: Vec<ParticipantRegistration>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+pub struct GroupScore {
     pub participant: Participant,
     pub fina_points: u32,
     pub rank: u32,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+pub struct GroupScoreboard {
+    pub group: Group,
+    pub scores: Vec<GroupScore>,
+    pub missing_results: Vec<RegistrationDetails>,
 }

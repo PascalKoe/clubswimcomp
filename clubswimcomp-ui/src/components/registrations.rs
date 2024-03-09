@@ -103,14 +103,13 @@ pub fn AddResultForm(
             <div class="form-control w-full max-w-2xl mt-4">
                 <input class="btn btn-primary" type="submit" value="Add Result" disabled=saving_to_server />
             </div>
-
-            {/* Cancel the form */}
-            <div class="form-control w-full max-w-2xl mt-4">
-                <button class="btn btn-neutral" on:click=cancel_clicked>
-                    Cancel
-                </button>
-            </div>
         </form>
+        {/* Cancel the form */}
+        <div class="form-control w-full max-w-2xl mt-4">
+        <button class="btn btn-neutral" on:click=cancel_clicked>
+            Cancel
+        </button>
+    </div>
     }
 }
 

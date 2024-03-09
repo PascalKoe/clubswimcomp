@@ -10,8 +10,8 @@ use uuid::Uuid;
 
 use crate::services::{
     AvailableCompetitionsForRegistrationError, ParticipantDetailsError,
-    ParticipantRegistrationCardsError, RegisterForCompetitionsError, RemoveParticipantError,
-    UnregisterFromCompetitionError,
+    ParticipantRegistrationCardsError, ParticipantScoreboardError, RegisterForCompetitionsError,
+    RemoveParticipantError, UnregisterFromCompetitionError,
 };
 
 use super::{ApiError, AppState};
@@ -22,6 +22,7 @@ pub fn router() -> Router<AppState> {
         .route("/", post(add_participant))
         .route("/:participant_id", get(participant_details))
         .route("/:participant_id", delete(remove_participant))
+        .route("/:participant_id/scoreboard", get(participant_scoreboard))
         .route(
             "/:participant_id/registrations/available-competitions",
             get(available_competitions_for_registration),
@@ -103,6 +104,15 @@ impl From<&ParticipantRegistrationCardsError> for StatusCode {
     }
 }
 
+impl From<&ParticipantScoreboardError> for StatusCode {
+    fn from(err: &ParticipantScoreboardError) -> Self {
+        match err {
+            ParticipantScoreboardError::ParticipantDoesNotExist => Self::NOT_FOUND,
+            ParticipantScoreboardError::RepositoryError(_) => Self::INTERNAL_SERVER_ERROR,
+        }
+    }
+}
+
 #[instrument(skip(state))]
 async fn list_participants(
     State(state): State<AppState>,
@@ -155,6 +165,17 @@ async fn remove_participant(
         .remove_participant(participant_id, p.force_delete.unwrap_or_default())
         .await
         .map_err(ApiError::from)
+}
+
+#[instrument(skip(state))]
+async fn participant_scoreboard(
+    Path(participant_id): Path<Uuid>,
+    State(state): State<AppState>,
+) -> Result<Json<model::ParticipantScoreboard>, ApiError> {
+    let score_service = state.score_service();
+    let scoreboard = score_service.participant_scoreboard(participant_id).await?;
+
+    Ok(Json(scoreboard))
 }
 
 #[instrument(skip(state))]

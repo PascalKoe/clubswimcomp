@@ -5,7 +5,7 @@ use axum::Router;
 use crate::db;
 use crate::services::{
     CompetitionService, GroupService, ParticipantService, RegistrationCardService,
-    RegistrationService, ServiceRepositoryError,
+    RegistrationService, ScoreService, ServiceRepositoryError,
 };
 
 mod competitions;
@@ -123,6 +123,15 @@ impl AppState {
 
     pub fn group_service(&self) -> GroupService {
         GroupService::new(
+            self.participant_repo.clone(),
+            self.registration_repo.clone(),
+            self.competition_repo.clone(),
+            self.group_repo.clone(),
+        )
+    }
+
+    pub fn score_service(&self) -> ScoreService {
+        ScoreService::new(
             self.participant_repo.clone(),
             self.registration_repo.clone(),
             self.competition_repo.clone(),

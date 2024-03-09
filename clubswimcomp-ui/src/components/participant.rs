@@ -293,7 +293,8 @@ pub fn AddParticipantForm(
         add_participant_action.dispatch(input);
     };
 
-    let on_cancel_button_clicked = move |_| {
+    let on_cancel_button_clicked = move |ev: ev::MouseEvent| {
+        ev.prevent_default();
         on_cancel(());
     };
 

@@ -111,10 +111,8 @@ async fn competition_scoreboard(
     State(state): State<AppState>,
     Path(competition_id): Path<Uuid>,
 ) -> Result<Json<model::CompetitionScoreboard>, ApiError> {
-    let competition_service = state.competition_service();
-    let scoreboard = competition_service
-        .competition_scoreboard(competition_id)
-        .await?;
+    let score_service = state.score_service();
+    let scoreboard = score_service.competition_scoreboard(competition_id).await?;
 
     Ok(Json(scoreboard))
 }

@@ -6,7 +6,10 @@ use thiserror::Error;
 use tracing::instrument;
 use uuid::Uuid;
 
-use crate::{db, services::ParticipantService};
+use crate::{
+    db,
+    services::{score::ScoreService, ParticipantService},
+};
 
 use super::ServiceRepositoryError;
 
@@ -67,6 +70,13 @@ impl GroupService {
         &self,
         group_id: Uuid,
     ) -> Result<model::GroupDetails, GroupResultError> {
+        let score_service = ScoreService::new(
+            self.participant_repo.clone(),
+            self.registration_repo.clone(),
+            self.competition_repo.clone(),
+            self.group_repo.clone(),
+        );
+
         tracing::debug!("Ensuring group actually exists");
         let group = self
             .group_repo
@@ -77,80 +87,47 @@ impl GroupService {
             .ok_or(GroupResultError::GroupDoesNotExist)?;
 
         tracing::debug!("Loading participants in the group");
-        let db_participants = self
+        let mut participants = self
             .participant_repo
             .list_participants_in_group(group.id)
             .await
-            .context("Failed to fetch participants for group from repository")?;
+            .context("Failed to fetch participants for group from repository")?
+            .into_iter()
+            .map(|p| (p.id, model::Participant::from(p)))
+            .collect::<HashMap<_, _>>();
 
-        tracing::debug!("Fetching participant details");
-        let participant_service = ParticipantService::new(
-            self.participant_repo.clone(),
-            self.registration_repo.clone(),
-            self.competition_repo.clone(),
-            self.group_repo.clone(),
-        );
+        tracing::debug!("Fetching participant scores");
+        let participant_scores = score_service
+            .participants_fina_points()
+            .await
+            .context("Failed to fetch participants FINA points")?
+            .into_iter()
+            .filter(|r| participants.contains_key(&r.0))
+            .collect::<HashMap<_, _>>();
 
-        let mut participant_details = Vec::with_capacity(db_participants.len());
-        let mut participant_points: HashMap<Uuid, u32> = HashMap::new();
-        let mut registration_results_missing = Vec::new();
-
-        for db_participant in db_participants.into_iter() {
-            let pd = participant_service
-                .participant_details(db_participant.id)
-                .await
-                .context("Could not fetch participant even though a reference exists")?;
-
-            let (with_result, without_result): (Vec<_>, Vec<_>) = pd
-                .registrations
-                .clone()
-                .into_iter()
-                .partition(|r| r.result.is_some());
-
-            let without_result =
-                without_result
-                    .into_iter()
-                    .map(|registration| model::RegistrationDetails {
-                        id: registration.id,
-                        participant: pd.participant.clone(),
-                        competition: registration.competition,
-                        result: registration.result,
-                    });
-            registration_results_missing.extend(without_result);
-
-            let total_points = with_result
-                .iter()
-                .map(|r| r.result.as_ref().unwrap())
-                .map(|r| if !r.disqualified { r.fina_points } else { 0 })
-                .sum();
-
-            participant_points.insert(pd.participant.id, total_points);
-            participant_details.push(pd);
+        if participant_scores.len() == participants.len() {
+            return Err(GroupResultError::RepositoryError(anyhow::anyhow!(
+                "Participants scores and participants do not match up in length"
+            )));
         }
 
-        let mut scores = Vec::with_capacity(participant_details.len());
-        for participant in participant_details.into_iter() {
-            let own_points = *participant_points
-                .get(&participant.participant.id)
-                .expect("total points to be calculated for every participant");
-
-            let participants_with_higher_score = participant_points
-                .iter()
-                .filter(|p| *p.1 > own_points)
+        let mut scores = Vec::with_capacity(participants.len());
+        for (participant_id, (results_missing, own_fina_points)) in participant_scores.iter() {
+            let participants_with_more_points = participant_scores
+                .values()
+                .filter(|ps| ps.1 > *own_fina_points)
                 .count();
-            let rank = participants_with_higher_score as u32 + 1;
+
+            // 0 with more means 1st rank
+            let rank = participants_with_more_points as u32 + 1;
 
             scores.push(model::GroupScore {
-                participant: participant.participant,
-                fina_points: own_points,
+                participant: participants.remove(participant_id).unwrap(),
+                fina_points: *own_fina_points,
                 rank,
             });
         }
 
-        Ok(model::GroupDetails {
-            group,
-            registration_results_missing,
-            scores,
-        })
+        Ok(model::GroupDetails { group, scores })
     }
 }
